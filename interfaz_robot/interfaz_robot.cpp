@@ -26,8 +26,6 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.spinEje4, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje5, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
 
-
-
     // Crear el temporizador para mostrar vídeo en vivo
     timerVideo = new QTimer(this);
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
@@ -141,6 +139,11 @@ void interfaz_robot::MoverEje()
     else {
         QMessageBox::critical(this, "Error", "Robot no inicializado.");
     }
+
+    // Reiniciar spinbox y combo
+    ui.spinMover1->setValue(0);
+    ui.comboBoxMover1->setCurrentIndex(0);
+
 }
 
 void interfaz_robot::MoverTodosLosEjes()
@@ -184,6 +187,15 @@ void interfaz_robot::MoverTodosLosEjes()
 
     QMessageBox::information(this, "Movimiento",
         "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");
+
+    // Reiniciar todos los spinbox
+    ui.spinEje0->setValue(0);
+    ui.spinEje1->setValue(0);
+    ui.spinEje2->setValue(0);
+    ui.spinEje3->setValue(0);
+    ui.spinEje4->setValue(0);
+    ui.spinEje5->setValue(0);
+
 }
 
 void interfaz_robot::VerificarRango(int valor)
