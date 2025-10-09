@@ -28,7 +28,7 @@
      <widget class="QGroupBox" name="groupBox_camara">
       <property name="styleSheet">
        <string notr="true">QGroupBox {
-    background-color: #ffffff;
+    background-color: #F0F0F0; /* gris clarito */
     border: 2px solid #d0d0d0;
     border-radius: 8px;
     margin-top: 20px;
@@ -46,6 +46,9 @@ QGroupBox::title {
       </property>
       <property name="title">
        <string>CÁMARA</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -92,11 +95,13 @@ QPushButton:disabled {
         <widget class="QLabel" name="lblInicio">
          <property name="styleSheet">
           <string notr="true">QLabel {
-    background-color: #eeeeee;
+    background-color: #ffffff;
     border: 1px solid #cccccc;
     border-radius: 4px;
     color: #777777;
-}</string>
+}
+
+</string>
          </property>
          <property name="frameShape">
           <enum>QFrame::Box</enum>
@@ -150,7 +155,7 @@ QPushButton:disabled {
         <widget class="QLabel" name="lblCaptura">
          <property name="styleSheet">
           <string notr="true">QLabel {
-    background-color: #eeeeee;
+    background-color: #ffffff;
     border: 1px solid #cccccc;
     border-radius: 4px;
     color: #777777;
@@ -211,7 +216,7 @@ QPushButton:disabled {
      <widget class="QGroupBox" name="groupBox_robot">
       <property name="styleSheet">
        <string notr="true">QGroupBox {
-    background-color: #ffffff;       /* blanco dentro de cada sección */
+    background-color: #E0F0FF;  /* azul claro */
     border: 2px solid #d0d0d0;
     border-radius: 8px;
     margin-top: 20px;                /* espacio para el título */
@@ -230,6 +235,12 @@ QGroupBox::title {
       <property name="title">
        <string>ROBOT</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="checkable">
+       <bool>false</bool>
+      </property>
       <widget class="QGroupBox" name="groupBox_movimiento">
        <property name="geometry">
         <rect>
@@ -239,14 +250,58 @@ QGroupBox::title {
          <height>70</height>
         </rect>
        </property>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    background-color: rgb(255, 255, 255);
+    border: 2px solid #A0A0A0;  /* borde gris */
+    border-radius: 5px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center; /* título centrado */
+    padding: 0 3px;
+    color: #333333;
+}
+
+QSpinBox {
+    background-color: #FFFFFF;
+    border: 1px solid #A0A0A0;
+    border-radius: 3px;
+    padding: 2px;
+}
+
+QPushButton {
+    background-color: #87CEFA; /* azul cielo */
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #00BFFF; /* azul más intenso al pasar el ratón */
+}
+</string>
+       </property>
        <property name="title">
         <string>Mover un eje concreto</string>
        </property>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="label_eje_solo">
+          <property name="layoutDirection">
+           <enum>Qt::LeftToRight</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
           <property name="text">
            <string>Eje:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -304,6 +359,12 @@ QGroupBox::title {
             <height>0</height>
            </size>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::PlusMinus</enum>
+          </property>
           <property name="minimum">
            <number>-90</number>
           </property>
@@ -314,6 +375,36 @@ QGroupBox::title {
         </item>
         <item>
          <widget class="QPushButton" name="btnMover1">
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    background-color: #ffffff;       
+    border: 1px solid #cccccc;       
+    border-radius: 6px;              
+    padding: 6px 12px;               
+    color: #333333;                  
+    font-weight: bold;
+}
+
+/* Al pasar el ratón por encima */
+QPushButton:hover {
+    background-color: #e6f0ff;       /* azul muy claro (efecto hover) */
+    border: 1px solid #99c2ff;
+}
+
+/* Al hacer clic */
+QPushButton:pressed {
+    background-color: #cce0ff;       /* azul un poco más fuerte */
+    border: 1px solid #66a3ff;
+}
+
+/* Si está deshabilitado */
+QPushButton:disabled {
+    background-color: #f0f0f0;
+    color: #aaaaaa;
+    border: 1px solid #dddddd;
+}
+</string>
+          </property>
           <property name="text">
            <string>Mover</string>
           </property>
@@ -327,8 +418,43 @@ QGroupBox::title {
          <x>40</x>
          <y>150</y>
          <width>291</width>
-         <height>241</height>
+         <height>311</height>
         </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+	background-color: rgb(255, 255, 255);
+    border: 2px solid #A0A0A0;  /* borde gris */
+    border-radius: 5px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center; /* título centrado */
+    padding: 0 3px;
+    color: #333333;
+}
+
+QSpinBox {
+    background-color: #FFFFFF;
+    border: 1px solid #A0A0A0;
+    border-radius: 3px;
+    padding: 2px;
+}
+
+QPushButton {
+    background-color: #87CEFA; /* azul cielo */
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #00BFFF; /* azul más intenso al pasar el ratón */
+}
+</string>
        </property>
        <property name="title">
         <string>Mover ejes</string>
@@ -336,21 +462,56 @@ QGroupBox::title {
        <widget class="QSpinBox" name="spinEje0">
         <property name="geometry">
          <rect>
-          <x>30</x>
+          <x>90</x>
           <y>40</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QPushButton" name="btnMoverTodos">
         <property name="geometry">
          <rect>
-          <x>160</x>
-          <y>110</y>
+          <x>180</x>
+          <y>140</y>
           <width>75</width>
-          <height>24</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    background-color: #ffffff;       
+    border: 1px solid #cccccc;       
+    border-radius: 6px;              
+    padding: 6px 12px;               
+    color: #333333;                  
+    font-weight: bold;
+}
+
+/* Al pasar el ratón por encima */
+QPushButton:hover {
+    background-color: #e6f0ff;       /* azul muy claro (efecto hover) */
+    border: 1px solid #99c2ff;
+}
+
+/* Al hacer clic */
+QPushButton:pressed {
+    background-color: #cce0ff;       /* azul un poco más fuerte */
+    border: 1px solid #66a3ff;
+}
+
+/* Si está deshabilitado */
+QPushButton:disabled {
+    background-color: #f0f0f0;
+    color: #aaaaaa;
+    border: 1px solid #dddddd;
+}</string>
         </property>
         <property name="text">
          <string>Mover</string>
@@ -359,51 +520,210 @@ QGroupBox::title {
        <widget class="QSpinBox" name="spinEje1">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>70</y>
+          <x>90</x>
+          <y>80</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje2">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>100</y>
+          <x>90</x>
+          <y>120</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje3">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>130</y>
+          <x>90</x>
+          <y>160</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje4">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>160</y>
+          <x>90</x>
+          <y>200</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje5">
         <property name="geometry">
          <rect>
-          <x>30</x>
-          <y>190</y>
+          <x>90</x>
+          <y>240</y>
           <width>71</width>
-          <height>22</height>
+          <height>31</height>
          </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::PlusMinus</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje0">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>40</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="text">
+         <string>Eje 0:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje1">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>80</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Eje 1:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje2">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>120</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Eje 2:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje3">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>160</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Eje 3:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje4">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>200</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Eje 4:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_eje5">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>240</y>
+          <width>65</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Eje 5:</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </widget>
