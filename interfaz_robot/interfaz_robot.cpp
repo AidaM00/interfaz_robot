@@ -6,15 +6,18 @@
 #include <ctime> 
 #include <QTimer>
 #include <QMessageBox>
+#include <QSpinBox>
+#include <cmath>
+#include <array>
+#include <QString>
 
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
-        camara = new CVideoAcquisition("rtsp://admin:admin@192.168.1.105:8554/profile0");
+    camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
     connect(ui.btnInicio, &QPushButton::clicked, this, &interfaz_robot::startStopCapture);
-    connect(ui.btnCapturar, &QPushButton::clicked, this, &interfaz_robot::MostrarImagen);
     connect(ui.btnGuardar, &QPushButton::clicked, this, &interfaz_robot::GuardarImagen);
     connect(ui.btnMover1, &QPushButton::clicked, this, &interfaz_robot::MoverEje);
     connect(ui.btnMoverTodos, &QPushButton::clicked, this, &interfaz_robot::MoverTodosLosEjes);
@@ -33,6 +36,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
 
     ui.lblInicio->setText("Vídeo no iniciado");
+    ui.lblPosicionActual->setText("Posición actual: desconocida");
 	HabilitarBotones(false);
  
 }
@@ -52,12 +56,9 @@ void interfaz_robot::iniciarComRobot()
 void interfaz_robot::HabilitarBotones(bool habilitar)
 {
     ui.btnInicio->setEnabled(habilitar);
-    ui.btnCapturar->setEnabled(habilitar);
     ui.btnGuardar->setEnabled(habilitar);
     ui.btnMover1 -> setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
-    
-    
 }
 
 void interfaz_robot::startStopCapture()
@@ -67,7 +68,7 @@ void interfaz_robot::startStopCapture()
 
     if (capturando) {
         camara->startStopCapture(true);  // iniciar cámara
-        timerVideo->start(33);           // actualizar cada 33 ms (~30 FPS)
+        timerVideo->start(33);           // actualizar cada 33 ms (unos 30 FPS)
         ui.btnInicio->setText("Detener");
     }
     else {
@@ -92,25 +93,8 @@ void interfaz_robot::MostrarVideo()
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
     QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
-    ui.lblInicio->setPixmap(QPixmap::fromImage(img).scaled(ui.lblInicio->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    ui.lblInicio->setPixmap(QPixmap::fromImage(img));
 }
-
-void interfaz_robot::MostrarImagen()
-{
-    if (ultimoFrame.empty()) {
-        qDebug() << "Error: No hay imagen disponible para capturar.";
-        return;
-    }
-
-    cv::Mat rgbImg;
-    cv::cvtColor(ultimoFrame, rgbImg, cv::COLOR_BGR2RGB);
-    QImage qImg((uchar*)rgbImg.data, rgbImg.cols, rgbImg.rows, rgbImg.step, QImage::Format_RGB888);
-
-    ui.lblCaptura->setPixmap(QPixmap::fromImage(qImg).scaled(ui.lblCaptura->size(), Qt::KeepAspectRatio, Qt::SmoothTransformation));
-
-    qDebug() << "Imagen capturada mostrada en lblCaptura.";
-}
-
 
 void interfaz_robot::GuardarImagen()
 {
@@ -149,14 +133,11 @@ void interfaz_robot::MoverEje()
         m_robot->mover(eje, grados);
         QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
+        Directa();  // Calcula y muestra la posición resultante
     }
     else {
         QMessageBox::critical(this, "Error", "Robot no inicializado.");
     }
-
-    // Reiniciar spinbox y combo
-    ui.spinMover1->setValue(0);
-    ui.comboBoxMover1->setCurrentIndex(0);
 
 }
 
@@ -196,20 +177,11 @@ void interfaz_robot::MoverTodosLosEjes()
     // Enviar el comando al robot
     if (m_robot)
         m_robot->enviarComando(comando);
-
     qDebug() << "Comando enviado al robot:" << comando;
-
     QMessageBox::information(this, "Movimiento",
         "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");
 
-    // Reiniciar todos los spinbox
-    ui.spinEje0->setValue(0);
-    ui.spinEje1->setValue(0);
-    ui.spinEje2->setValue(0);
-    ui.spinEje3->setValue(0);
-    ui.spinEje4->setValue(0);
-    ui.spinEje5->setValue(0);
-
+    Directa();  // Calcula y muestra la posición resultante
 }
 
 void interfaz_robot::VerificarRango(int valor)
@@ -226,9 +198,89 @@ void interfaz_robot::VerificarRango(int valor)
     }
 }
 
+//void interfaz_robot::ActualizarPosicionRobot()
+//{
+//    if (!m_robot) {
+//        ui.lblPosicionActual->setText("Robot no conectado");
+//        return;
+//    }
+//    
+//    std::vector<int> angulos = m_robot->obtenerPosicionActual();
+//
+//    if (angulos.size() == 6) {
+//        QString texto = QString("Posición actual: [ %1°, %2°, %3°, %4°, %5°, %6° ]")
+//            .arg(angulos[0]).arg(angulos[1]).arg(angulos[2])
+//            .arg(angulos[3]).arg(angulos[4]).arg(angulos[5]);
+//
+//        ui.lblPosicionActual->setText(texto);
+//    }
+//    else {
+//        ui.lblPosicionActual->setText("Error al leer posición");
+//    }
+//}
+
+
+
+
+
+
+using Mat4 = std::array<std::array<double, 4>, 4>;
+constexpr double DEG2RAD = M_PI / 180.0;
+constexpr double RAD2DEG = 180.0 / M_PI;
+
+static Mat4 matIdentity() {
+    Mat4 m{};
+    for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) m[i][j] = (i == j) ? 1 : 0;
+    return m;
+}
+static Mat4 matMul(const Mat4& A, const Mat4& B) {
+    Mat4 C = {};
+    for (int i = 0; i < 4; ++i) for (int j = 0; j < 4; ++j) {
+        C[i][j] = 0;
+        for (int k = 0; k < 4; ++k) C[i][j] += A[i][k] * B[k][j];
+    }
+    return C;
+}
+static Mat4 Rz(double th) { double c = cos(th), s = sin(th); Mat4 m = matIdentity(); m[0][0] = c; m[0][1] = -s; m[1][0] = s; m[1][1] = c; return m; }
+static Mat4 Ry(double th) { double c = cos(th), s = sin(th); Mat4 m = matIdentity(); m[0][0] = c; m[0][2] = s; m[2][0] = -s; m[2][2] = c; return m; }
+static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
+
+
+
 void interfaz_robot::Directa() {
 
+    // Leer ángulos desde los spinbox
+    double q1 = ui.spinEje0->value() * DEG2RAD;
+    double q2 = ui.spinEje1->value() * DEG2RAD;
+    double q3 = ui.spinEje2->value() * DEG2RAD;
+    double q4 = ui.spinEje3->value() * DEG2RAD;
+    double q5 = ui.spinEje4->value() * DEG2RAD;
 
+    // Longitudes del robot (mm)
+    const double a1 = 76, a2 = 125, a3 = 125, a4 = 60, a5 = 132;
+
+    // Transformación total
+    Mat4 RTbt = matIdentity();
+    RTbt = matMul(RTbt, Rz(q1));
+    RTbt = matMul(RTbt, Tz(a1));
+    RTbt = matMul(RTbt, Ry(q2));
+    RTbt = matMul(RTbt, Tz(a2));
+    RTbt = matMul(RTbt, Ry(q3));
+    RTbt = matMul(RTbt, Tz(a3));
+    RTbt = matMul(RTbt, Ry(q4));
+    RTbt = matMul(RTbt, Tz(a4));
+    RTbt = matMul(RTbt, Rz(q5));
+    RTbt = matMul(RTbt, Tz(a5));
+
+    // Posición
+    double px = RTbt[0][3], py = RTbt[1][3], pz = RTbt[2][3];
+
+    ui.lblPosicionActual->setText(
+        QString("Pos: [X=%1, Y=%2, Z=%3] mm")
+        .arg(px, 0, 'f', 1)
+        .arg(py, 0, 'f', 1)
+        .arg(pz, 0, 'f', 1)
+    );
 
 }
 

@@ -48,7 +48,7 @@ QGroupBox::title {
        <string>CÁMARA</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignCenter</set>
+       <set>Qt::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -93,6 +93,24 @@ QPushButton:disabled {
        </item>
        <item>
         <widget class="QLabel" name="lblInicio">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="baseSize">
+          <size>
+           <width>200</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="styleSheet">
           <string notr="true">QLabel {
     background-color: #ffffff;
@@ -104,71 +122,13 @@ QPushButton:disabled {
 </string>
          </property>
          <property name="frameShape">
-          <enum>QFrame::Shape::Box</enum>
+          <enum>QFrame::Box</enum>
          </property>
          <property name="text">
           <string>TextLabel</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignmentFlag::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnCapturar">
-         <property name="styleSheet">
-          <string notr="true">QPushButton {
-    background-color: #ffffff;       
-    border: 1px solid #cccccc;       
-    border-radius: 6px;              
-    padding: 6px 12px;               
-    color: #333333;                  
-    font-weight: bold;
-}
-
-/* Al pasar el ratón por encima */
-QPushButton:hover {
-    background-color: #e6f0ff;       /* azul muy claro (efecto hover) */
-    border: 1px solid #99c2ff;
-}
-
-/* Al hacer clic */
-QPushButton:pressed {
-    background-color: #cce0ff;       /* azul un poco más fuerte */
-    border: 1px solid #66a3ff;
-}
-
-/* Si está deshabilitado */
-QPushButton:disabled {
-    background-color: #f0f0f0;
-    color: #aaaaaa;
-    border: 1px solid #dddddd;
-}
-</string>
-         </property>
-         <property name="text">
-          <string>Capturar imagen</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="lblCaptura">
-         <property name="styleSheet">
-          <string notr="true">QLabel {
-    background-color: #ffffff;
-    border: 1px solid #cccccc;
-    border-radius: 4px;
-    color: #777777;
-}</string>
-         </property>
-         <property name="frameShape">
-          <enum>QFrame::Shape::Box</enum>
-         </property>
-         <property name="text">
-          <string>TextLabel</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignmentFlag::AlignCenter</set>
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -214,6 +174,12 @@ QPushButton:disabled {
     </item>
     <item>
      <widget class="QGroupBox" name="groupBox_robot">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="styleSheet">
        <string notr="true">QGroupBox {
     background-color: #E0F0FF;  /* azul claro */
@@ -236,7 +202,7 @@ QGroupBox::title {
        <string>ROBOT</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignmentFlag::AlignCenter</set>
+       <set>Qt::AlignCenter</set>
       </property>
       <property name="checkable">
        <bool>false</bool>
@@ -245,8 +211,8 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>40</x>
-         <y>40</y>
-         <width>291</width>
+         <y>120</y>
+         <width>371</width>
          <height>70</height>
         </rect>
        </property>
@@ -292,7 +258,7 @@ QPushButton:hover {
         <item>
          <widget class="QLabel" name="label_eje_solo">
           <property name="layoutDirection">
-           <enum>Qt::LayoutDirection::LeftToRight</enum>
+           <enum>Qt::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -301,7 +267,7 @@ QPushButton:hover {
            <string>Eje:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -360,10 +326,10 @@ QPushButton:hover {
            </size>
           </property>
           <property name="alignment">
-           <set>Qt::AlignmentFlag::AlignCenter</set>
+           <set>Qt::AlignCenter</set>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+           <enum>QAbstractSpinBox::PlusMinus</enum>
           </property>
           <property name="minimum">
            <number>-90</number>
@@ -416,9 +382,9 @@ QPushButton:disabled {
        <property name="geometry">
         <rect>
          <x>40</x>
-         <y>150</y>
-         <width>291</width>
-         <height>311</height>
+         <y>200</y>
+         <width>371</width>
+         <height>371</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -463,25 +429,25 @@ QPushButton:hover {
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>40</y>
-          <width>71</width>
-          <height>31</height>
+          <y>30</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QPushButton" name="btnMoverTodos">
         <property name="geometry">
          <rect>
-          <x>180</x>
-          <y>140</y>
-          <width>75</width>
-          <height>31</height>
+          <x>190</x>
+          <y>150</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -522,98 +488,98 @@ QPushButton:disabled {
          <rect>
           <x>90</x>
           <y>80</y>
-          <width>71</width>
-          <height>31</height>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje2">
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>120</y>
-          <width>71</width>
-          <height>31</height>
+          <y>130</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje3">
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>160</y>
-          <width>71</width>
-          <height>31</height>
+          <y>180</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje4">
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>200</y>
-          <width>71</width>
-          <height>31</height>
+          <y>230</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje5">
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>240</y>
-          <width>71</width>
-          <height>31</height>
+          <y>280</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
+         <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje0">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>40</y>
+          <y>30</y>
           <width>65</width>
           <height>31</height>
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="text">
          <string>Eje 0:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje1">
@@ -626,7 +592,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -635,20 +601,20 @@ QPushButton:disabled {
          <string>Eje 1:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje2">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>120</y>
+          <y>130</y>
           <width>65</width>
           <height>31</height>
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -657,20 +623,20 @@ QPushButton:disabled {
          <string>Eje 2:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje3">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>160</y>
+          <y>180</y>
           <width>65</width>
           <height>31</height>
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -679,20 +645,20 @@ QPushButton:disabled {
          <string>Eje 3:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje4">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>200</y>
+          <y>230</y>
           <width>65</width>
           <height>31</height>
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -701,20 +667,20 @@ QPushButton:disabled {
          <string>Eje 4:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje5">
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>240</y>
+          <y>280</y>
           <width>65</width>
           <height>31</height>
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LayoutDirection::LeftToRight</enum>
+         <enum>Qt::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -723,15 +689,28 @@ QPushButton:disabled {
          <string>Eje 5:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignmentFlag::AlignCenter</set>
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lblPosicionActual">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>335</y>
+          <width>351</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>TextLabel</string>
         </property>
        </widget>
       </widget>
       <widget class="QSpinBox" name="spinBoxCOM">
        <property name="geometry">
         <rect>
-         <x>220</x>
-         <y>470</y>
+         <x>40</x>
+         <y>60</y>
          <width>68</width>
          <height>22</height>
         </rect>
@@ -740,10 +719,10 @@ QPushButton:disabled {
       <widget class="QPushButton" name="btnComunicacionrobot">
        <property name="geometry">
         <rect>
-         <x>50</x>
-         <y>470</y>
-         <width>151</width>
-         <height>24</height>
+         <x>120</x>
+         <y>50</y>
+         <width>161</width>
+         <height>41</height>
         </rect>
        </property>
        <property name="text">
@@ -760,7 +739,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>957</width>
-     <height>33</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

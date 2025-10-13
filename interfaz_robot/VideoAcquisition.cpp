@@ -7,7 +7,9 @@ CVideoAcquisition::CVideoAcquisition(QString videoStreamAddress)
 	vidcap = new VideoCapture();
 
 	//conexión con webcam
-	cameraOK = vidcap->open(0);
+	cameraOK = vidcap->open(1); // 0 para webcam
+	vidcap->set(CAP_PROP_AUTOFOCUS, 0); // desactivar autofocus
+	vidcap->set(CAP_PROP_FOCUS, 21); // establecer foco manual
 	//conexión con cámara ip
 	//cameraOK = vidcap->open(videoStreamAddress.toStdString());
 

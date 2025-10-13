@@ -11,6 +11,7 @@ public:
 	~Ccom_robot();
 	void mover(int eje, int angulo);
 	void enviarComando(const QString& comando);
+	void obtenerPosicionActual();
 
 protected:
 	QSerialPort m_serial;

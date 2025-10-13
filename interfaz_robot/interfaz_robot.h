@@ -14,19 +14,19 @@ class interfaz_robot : public QMainWindow
     Q_OBJECT
 
 public:
-    interfaz_robot(QWidget *parent = nullptr);
+    interfaz_robot(QWidget* parent = nullptr);
     ~interfaz_robot();
 
 private slots:
     void HabilitarBotones(bool habilitar);
     void startStopCapture();
     void MostrarVideo();
-    void MostrarImagen();
     void GuardarImagen();
     void MoverEje();
-	void MoverTodosLosEjes();
+    void MoverTodosLosEjes();
     void VerificarRango(int valor);
     void iniciarComRobot();
+    //void ActualizarPosicionRobot();
     void Directa();
 
 private:
@@ -35,6 +35,6 @@ private:
     QTimer* timerVideo;
     cv::VideoCapture cap;      // Cámara
     cv::Mat ultimoFrame;
-	Ccom_robot* m_robot;
+    Ccom_robot* m_robot;
 };
 
