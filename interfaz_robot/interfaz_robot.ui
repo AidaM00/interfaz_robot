@@ -48,7 +48,7 @@ QGroupBox::title {
        <string>CÁMARA</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -236,7 +236,7 @@ QGroupBox::title {
        <string>ROBOT</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignCenter</set>
+       <set>Qt::AlignmentFlag::AlignCenter</set>
       </property>
       <property name="checkable">
        <bool>false</bool>
@@ -292,7 +292,7 @@ QPushButton:hover {
         <item>
          <widget class="QLabel" name="label_eje_solo">
           <property name="layoutDirection">
-           <enum>Qt::LeftToRight</enum>
+           <enum>Qt::LayoutDirection::LeftToRight</enum>
           </property>
           <property name="styleSheet">
            <string notr="true"/>
@@ -301,7 +301,7 @@ QPushButton:hover {
            <string>Eje:</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -360,10 +360,10 @@ QPushButton:hover {
            </size>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::PlusMinus</enum>
+           <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
           </property>
           <property name="minimum">
            <number>-90</number>
@@ -469,10 +469,10 @@ QPushButton:hover {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QPushButton" name="btnMoverTodos">
@@ -527,10 +527,10 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje2">
@@ -543,10 +543,10 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje3">
@@ -559,10 +559,10 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje4">
@@ -575,10 +575,10 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QSpinBox" name="spinEje5">
@@ -591,10 +591,10 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
         <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::PlusMinus</enum>
+         <enum>QAbstractSpinBox::ButtonSymbols::PlusMinus</enum>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje0">
@@ -607,13 +607,13 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="text">
          <string>Eje 0:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje1">
@@ -626,7 +626,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -635,7 +635,7 @@ QPushButton:disabled {
          <string>Eje 1:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje2">
@@ -648,7 +648,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -657,7 +657,7 @@ QPushButton:disabled {
          <string>Eje 2:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje3">
@@ -670,7 +670,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -679,7 +679,7 @@ QPushButton:disabled {
          <string>Eje 3:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje4">
@@ -692,7 +692,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -701,7 +701,7 @@ QPushButton:disabled {
          <string>Eje 4:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
        <widget class="QLabel" name="label_eje5">
@@ -714,7 +714,7 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="layoutDirection">
-         <enum>Qt::LeftToRight</enum>
+         <enum>Qt::LayoutDirection::LeftToRight</enum>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
@@ -723,15 +723,15 @@ QPushButton:disabled {
          <string>Eje 5:</string>
         </property>
         <property name="alignment">
-         <set>Qt::AlignCenter</set>
+         <set>Qt::AlignmentFlag::AlignCenter</set>
         </property>
        </widget>
       </widget>
       <widget class="QSpinBox" name="spinBoxCOM">
        <property name="geometry">
         <rect>
-         <x>50</x>
-         <y>430</y>
+         <x>220</x>
+         <y>470</y>
          <width>68</width>
          <height>22</height>
         </rect>
@@ -740,8 +740,8 @@ QPushButton:disabled {
       <widget class="QPushButton" name="btnComunicacionrobot">
        <property name="geometry">
         <rect>
-         <x>40</x>
-         <y>400</y>
+         <x>50</x>
+         <y>470</y>
          <width>151</width>
          <height>24</height>
         </rect>

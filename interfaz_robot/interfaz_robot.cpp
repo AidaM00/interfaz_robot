@@ -33,6 +33,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
 
     ui.lblInicio->setText("Vídeo no iniciado");
+	HabilitarBotones(false);
  
 }
 
@@ -44,6 +45,8 @@ void interfaz_robot::iniciarComRobot()
 {
     int com = ui.spinBoxCOM->value();
     m_robot = new Ccom_robot(com);
+    HabilitarBotones(true);
+    ui.btnComunicacionrobot->setEnabled(false);
 }
 
 void interfaz_robot::HabilitarBotones(bool habilitar)
@@ -51,6 +54,10 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnInicio->setEnabled(habilitar);
     ui.btnCapturar->setEnabled(habilitar);
     ui.btnGuardar->setEnabled(habilitar);
+    ui.btnMover1 -> setEnabled(habilitar);
+    ui.btnMoverTodos->setEnabled(habilitar);
+    
+    
 }
 
 void interfaz_robot::startStopCapture()
@@ -217,6 +224,12 @@ void interfaz_robot::VerificarRango(int valor)
     else {
         spin->setStyleSheet("color: black;");
     }
+}
+
+void interfaz_robot::Directa() {
+
+
+
 }
 
 
