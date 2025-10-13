@@ -18,6 +18,8 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnGuardar, &QPushButton::clicked, this, &interfaz_robot::GuardarImagen);
     connect(ui.btnMover1, &QPushButton::clicked, this, &interfaz_robot::MoverEje);
     connect(ui.btnMoverTodos, &QPushButton::clicked, this, &interfaz_robot::MoverTodosLosEjes);
+    connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
+    
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -31,12 +33,17 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
 
     ui.lblInicio->setText("Vídeo no iniciado");
-	m_robot = new Ccom_robot(3); // Poner el n de puerto que sea
+ 
 }
 
 interfaz_robot::~interfaz_robot()
 {
 	delete camara;
+}
+void interfaz_robot::iniciarComRobot() 
+{
+    int com = ui.spinBoxCOM->value();
+    m_robot = new Ccom_robot(com);
 }
 
 void interfaz_robot::HabilitarBotones(bool habilitar)

@@ -26,6 +26,7 @@ private slots:
     void MoverEje();
 	void MoverTodosLosEjes();
     void VerificarRango(int valor);
+    void iniciarComRobot();
 
 private:
     Ui::interfaz_robotClass ui;
