@@ -133,7 +133,7 @@ void interfaz_robot::MoverEje()
         m_robot->mover(eje, grados);
         QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
-        Directa();  // Calcula y muestra la posición resultante
+        Directa();  // Calcula y muestra la rotación y posición resultante
     }
     else {
         QMessageBox::critical(this, "Error", "Robot no inicializado.");
@@ -181,7 +181,7 @@ void interfaz_robot::MoverTodosLosEjes()
     QMessageBox::information(this, "Movimiento",
         "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");
 
-    Directa();  // Calcula y muestra la posición resultante
+    Directa();  // Calcula y muestra la rotación y posición resultante
 }
 
 void interfaz_robot::VerificarRango(int valor)
@@ -249,7 +249,7 @@ static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
 
 void interfaz_robot::Directa() {
 
-    // Leer ángulos desde los spinbox
+    // Leer ángulos q1 a q5 desde los spinbox
     double q1 = ui.spinEje0->value() * DEG2RAD;
     double q2 = ui.spinEje1->value() * DEG2RAD;
     double q3 = ui.spinEje2->value() * DEG2RAD;
@@ -259,22 +259,45 @@ void interfaz_robot::Directa() {
     // Longitudes del robot (mm)
     const double a1 = 76, a2 = 125, a3 = 125, a4 = 60, a5 = 132;
 
-    // Transformación total
-    Mat4 RTbt = matIdentity();
-    RTbt = matMul(RTbt, Rz(q1));
-    RTbt = matMul(RTbt, Tz(a1));
-    RTbt = matMul(RTbt, Ry(q2));
-    RTbt = matMul(RTbt, Tz(a2));
-    RTbt = matMul(RTbt, Ry(q3));
-    RTbt = matMul(RTbt, Tz(a3));
-    RTbt = matMul(RTbt, Ry(q4));
-    RTbt = matMul(RTbt, Tz(a4));
-    RTbt = matMul(RTbt, Rz(q5));
-    RTbt = matMul(RTbt, Tz(a5));
+    // Ángulos acumulados
+    double ang3 = q2 + q3;
+    double ang4 = q2 + q3 + q4;
 
-    // Posición
-    double px = RTbt[0][3], py = RTbt[1][3], pz = RTbt[2][3];
+    // ---- MATRIZ DE ROTACIÓN R ----
+    // Preparación de senos y cosenos
+    double c1 = cos(q1), s1 = sin(q1);
+    double c2 = cos(q2), s2 = sin(q2);
+    double c5 = cos(q5), s5 = sin(q5);
+    double sin_3 = sin(ang3), cos_3 = cos(ang3);
+    double sin_4 = sin(ang4), cos_4 = cos(ang4);
+    // Matriz R
+    double R11 = c1 * cos_4 * c5 - s1 * s5;
+    double R12 = -c1 * cos_4 * s5 - s1 * c5;
+    double R13 = c1 * sin_4;
+    double R21 = s1 * cos_4 * c5 + c1 * s5;
+    double R22 = -s1 * cos_4 * s5 + c1 * c5;
+    double R23 = s1 * sin_4;
+    double R31 = -sin_4 * c5;
+    double R32 = sin_4 * s5;
+    double R33 = cos_4;
+    // Mostrar la matriz R
+    ui.lblRotacion->setText(
+        QString(
+            "Rot =\n"
+            "[ %1  %2  %3 ]\n"
+            "[ %4  %5  %6 ]\n"
+            "[ %7  %8  %9 ]"
+        ).arg(R11, 0, 'f', 3).arg(R12, 0, 'f', 3).arg(R13, 0, 'f', 3)
+        .arg(R21, 0, 'f', 3).arg(R22, 0, 'f', 3).arg(R23, 0, 'f', 3)
+        .arg(R31, 0, 'f', 3).arg(R32, 0, 'f', 3).arg(R33, 0, 'f', 3)
+    );
 
+	// ---- POSICIÓN P ----
+    double S = a2 * s2 + a3 * sin_3 + (a4 + a5) * sin_4;
+    double px = c1 * S;
+    double py = s1 * S;
+    double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
+	// Mostrar la posición P
     ui.lblPosicionActual->setText(
         QString("Pos: [X=%1, Y=%2, Z=%3] mm")
         .arg(px, 0, 'f', 1)
@@ -282,9 +305,39 @@ void interfaz_robot::Directa() {
         .arg(pz, 0, 'f', 1)
     );
 
+    
+
+    
+
+
+
+
+
+
+    //// Transformación total
+    //Mat4 RTbt = matIdentity();
+    //RTbt = matMul(RTbt, Rz(q1));
+    //RTbt = matMul(RTbt, Tz(a1));
+    //RTbt = matMul(RTbt, Ry(q2));
+    //RTbt = matMul(RTbt, Tz(a2));
+    //RTbt = matMul(RTbt, Ry(q3));
+    //RTbt = matMul(RTbt, Tz(a3));
+    //RTbt = matMul(RTbt, Ry(q4));
+    //RTbt = matMul(RTbt, Tz(a4));
+    //RTbt = matMul(RTbt, Rz(q5));
+    //RTbt = matMul(RTbt, Tz(a5));
+
+    //// Posición
+    //double px = RTbt[0][3], py = RTbt[1][3], pz = RTbt[2][3];
+
+    //ui.lblPosicionActual->setText(
+    //    QString("Pos: [X=%1, Y=%2, Z=%3] mm")
+    //    .arg(px, 0, 'f', 1)
+    //    .arg(py, 0, 'f', 1)
+    //    .arg(pz, 0, 'f', 1)
+    //);
+
 }
-
-
 
 
 

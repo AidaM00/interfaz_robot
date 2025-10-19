@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>957</width>
-    <height>660</height>
+    <height>687</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -211,7 +211,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>40</x>
-         <y>120</y>
+         <y>100</y>
          <width>371</width>
          <height>70</height>
         </rect>
@@ -382,9 +382,9 @@ QPushButton:disabled {
        <property name="geometry">
         <rect>
          <x>40</x>
-         <y>200</y>
+         <y>180</y>
          <width>371</width>
-         <height>371</height>
+         <height>421</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -692,7 +692,7 @@ QPushButton:disabled {
          <set>Qt::AlignCenter</set>
         </property>
        </widget>
-       <widget class="QLabel" name="lblPosicionActual">
+       <widget class="QLabel" name="lblRotacion">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -702,7 +702,20 @@ QPushButton:disabled {
          </rect>
         </property>
         <property name="text">
-         <string>TextLabel</string>
+         <string>Rotacion</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lblPosicionActual">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>370</y>
+          <width>351</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Posicion</string>
         </property>
        </widget>
       </widget>
