@@ -7,7 +7,7 @@ CVideoAcquisition::CVideoAcquisition(QString videoStreamAddress)
 	vidcap = new VideoCapture();
 
 	//conexión con webcam
-	cameraOK = vidcap->open(1); // 0 para webcam
+	cameraOK = vidcap->open(1, cv::CAP_DSHOW);  // 0 para webcam
 	vidcap->set(CAP_PROP_AUTOFOCUS, 0); // desactivar autofocus
 	vidcap->set(CAP_PROP_FOCUS, 21); // establecer foco manual
 	//conexión con cámara ip

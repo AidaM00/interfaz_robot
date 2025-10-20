@@ -46,6 +46,9 @@
     <ClCompile Include="com_robot.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="camera_calibration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="VideoAcquisition.h">
@@ -54,5 +57,10 @@
     <QtMoc Include="com_robot.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camera_calibration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

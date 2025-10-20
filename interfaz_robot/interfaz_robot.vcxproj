@@ -110,6 +110,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera_calibration.cpp" />
     <ClCompile Include="com_robot.cpp" />
     <ClCompile Include="VideoAcquisition.cpp" />
     <QtRcc Include="interfaz_robot.qrc" />
@@ -123,6 +124,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="com_robot.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="camera_calibration.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

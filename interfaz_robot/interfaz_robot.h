@@ -28,6 +28,7 @@ private slots:
     void iniciarComRobot();
     //void ActualizarPosicionRobot();
     void Directa();
+    void CalibrarCamara();
 
 private:
     Ui::interfaz_robotClass ui;

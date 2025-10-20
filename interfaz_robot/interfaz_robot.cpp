@@ -11,17 +11,20 @@
 #include <array>
 #include <QString>
 
+double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
+
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
 {
     ui.setupUi(this);
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
-    connect(ui.btnInicio, &QPushButton::clicked, this, &interfaz_robot::startStopCapture);
-    connect(ui.btnGuardar, &QPushButton::clicked, this, &interfaz_robot::GuardarImagen);
-    connect(ui.btnMover1, &QPushButton::clicked, this, &interfaz_robot::MoverEje);
-    connect(ui.btnMoverTodos, &QPushButton::clicked, this, &interfaz_robot::MoverTodosLosEjes);
+    connect(ui.btnInicio, SIGNAL(clicked()), this, SLOT(startStopCapture()));
+    connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
+    connect(ui.btnMover1, SIGNAL(clicked()), this, SLOT(MoverEje()));
+    connect(ui.btnMoverTodos, SIGNAL(clicked()), this, SLOT(MoverTodosLosEjes()));
     connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
+    //connect(ui.btnCalibrar, SIGNAL(clicked()), this, SLOT(CalibrarCamara()));
     
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -59,6 +62,7 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnGuardar->setEnabled(habilitar);
     ui.btnMover1 -> setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
+	//ui.btnCalibrar->setEnabled(habilitar);
 }
 
 void interfaz_robot::startStopCapture()
@@ -69,6 +73,15 @@ void interfaz_robot::startStopCapture()
     if (capturando) {
         camara->startStopCapture(true);  // iniciar cámara
         timerVideo->start(33);           // actualizar cada 33 ms (unos 30 FPS)
+
+        //// Llamar a la calibración
+        //std::vector<std::string> archivos = {
+        //    "calib_01.jpg", "calib_02.jpg", "calib_03.jpg",
+		//	"calib_04.jpg", "calib_05.jpg", "calib_06.jpg"
+        //    // Agregar todas las imágenes
+        //};
+       // calibrateCameraFromFiles(archivos);
+
         ui.btnInicio->setText("Detener");
     }
     else {
@@ -116,6 +129,18 @@ void interfaz_robot::GuardarImagen()
     }
 }
 
+void interfaz_robot::CalibrarCamara()
+{
+    //// Lista de archivos de calibración
+    //std::vector<std::string> archivos = {
+    //    "calib_01.jpg", "calib_02.jpg", "calib_03.jpg",
+    //    "calib_04.jpg", "calib_05.jpg", "calib_06.jpg"
+     //   // agregar todas las imágenes que tengamos
+    //};
+
+    //calibrateCameraFromFiles(archivos);  // Llamada a la función
+}
+
 void interfaz_robot::MoverEje()
 {
     int eje = ui.comboBoxMover1->currentIndex();
@@ -130,6 +155,7 @@ void interfaz_robot::MoverEje()
     // Enviar comando al robot
     if (m_robot) {
         qDebug() << "Moviendo eje" << eje << "a" << grados << "grados.";
+        q[eje] = grados;
         m_robot->mover(eje, grados);
         QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
@@ -180,6 +206,9 @@ void interfaz_robot::MoverTodosLosEjes()
     qDebug() << "Comando enviado al robot:" << comando;
     QMessageBox::information(this, "Movimiento",
         "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");
+
+    for (int i = 0; i < 6; i++)
+        q[i] = angulos[i];
 
     Directa();  // Calcula y muestra la rotación y posición resultante
 }
@@ -249,12 +278,12 @@ static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
 
 void interfaz_robot::Directa() {
 
-    // Leer ángulos q1 a q5 desde los spinbox
-    double q1 = ui.spinEje0->value() * DEG2RAD;
-    double q2 = ui.spinEje1->value() * DEG2RAD;
-    double q3 = ui.spinEje2->value() * DEG2RAD;
-    double q4 = ui.spinEje3->value() * DEG2RAD;
-    double q5 = ui.spinEje4->value() * DEG2RAD;
+    // Leer ángulos q1 a q5
+    double q1 = q[0] * DEG2RAD;
+    double q2 = q[1] * DEG2RAD;
+    double q3 = q[2] * DEG2RAD;
+    double q4 = q[3] * DEG2RAD;
+    double q5 = q[4] * DEG2RAD;
 
     // Longitudes del robot (mm)
     const double a1 = 76, a2 = 125, a3 = 125, a4 = 60, a5 = 132;
@@ -298,11 +327,20 @@ void interfaz_robot::Directa() {
     double py = s1 * S;
     double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
 	// Mostrar la posición P
+    //ui.lblPosicionActual->setText(
+    //    QString("Pos: [X=%1, Y=%2, Z=%3] mm")
+    //    .arg(px, 0, 'f', 1)
+    //    .arg(py, 0, 'f', 1)
+    //    .arg(pz, 0, 'f', 1)
+    //);
     ui.lblPosicionActual->setText(
-        QString("Pos: [X=%1, Y=%2, Z=%3] mm")
-        .arg(px, 0, 'f', 1)
-        .arg(py, 0, 'f', 1)
-        .arg(pz, 0, 'f', 1)
+        QString("Pos actual: [ %1, %2, %3, %4, %5, %6 ] grados")
+        .arg(q[0], 0, 'f', 1)
+        .arg(q[1], 0, 'f', 1)
+        .arg(q[2], 0, 'f', 1)
+        .arg(q[3], 0, 'f', 1)
+        .arg(q[4], 0, 'f', 1)
+        .arg(q[5], 0, 'f', 1)
     );
 
     
