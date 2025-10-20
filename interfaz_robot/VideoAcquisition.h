@@ -31,6 +31,7 @@ public:
 
 	//función que devuelve la última imagen
 	Mat getImage();
+	
 
 	//señales
 signals:
@@ -41,4 +42,5 @@ signals:
 public slots:
 	//slot para ejecutar/parar la adquisición de imágenes
 	void startStopCapture(bool startCapture);
+	void setFoco(int focoSet);
 };

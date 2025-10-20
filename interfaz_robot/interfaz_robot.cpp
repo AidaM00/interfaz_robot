@@ -10,12 +10,13 @@
 #include <cmath>
 #include <array>
 #include <QString>
-
+#include "camera_calibration.h"
 double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
 
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
 {
+    cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
     ui.setupUi(this);
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
@@ -24,8 +25,9 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnMover1, SIGNAL(clicked()), this, SLOT(MoverEje()));
     connect(ui.btnMoverTodos, SIGNAL(clicked()), this, SLOT(MoverTodosLosEjes()));
     connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
-    //connect(ui.btnCalibrar, SIGNAL(clicked()), this, SLOT(CalibrarCamara()));
-    
+    connect(ui.btnCalibrar, SIGNAL(clicked()), this, SLOT(CalibrarCamara()));
+    connect(ui.spinFoco, SIGNAL(valueChanged(int)), camara, SLOT(setFoco(int)));
+
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -62,7 +64,7 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnGuardar->setEnabled(habilitar);
     ui.btnMover1 -> setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
-	//ui.btnCalibrar->setEnabled(habilitar);
+	ui.btnCalibrar->setEnabled(habilitar);
 }
 
 void interfaz_robot::startStopCapture()
@@ -73,14 +75,6 @@ void interfaz_robot::startStopCapture()
     if (capturando) {
         camara->startStopCapture(true);  // iniciar cámara
         timerVideo->start(33);           // actualizar cada 33 ms (unos 30 FPS)
-
-        //// Llamar a la calibración
-        //std::vector<std::string> archivos = {
-        //    "calib_01.jpg", "calib_02.jpg", "calib_03.jpg",
-		//	"calib_04.jpg", "calib_05.jpg", "calib_06.jpg"
-        //    // Agregar todas las imágenes
-        //};
-       // calibrateCameraFromFiles(archivos);
 
         ui.btnInicio->setText("Detener");
     }
@@ -132,13 +126,15 @@ void interfaz_robot::GuardarImagen()
 void interfaz_robot::CalibrarCamara()
 {
     //// Lista de archivos de calibración
-    //std::vector<std::string> archivos = {
-    //    "calib_01.jpg", "calib_02.jpg", "calib_03.jpg",
-    //    "calib_04.jpg", "calib_05.jpg", "calib_06.jpg"
-     //   // agregar todas las imágenes que tengamos
-    //};
+    std::vector<std::string> archivos = {
+    "calib_camara_01.jpg", "calib_camara_02.jpg", "calib_camara_03.jpg", "calib_camara_04.jpg", "calib_camara_05.jpg",
+    "calib_camara_06.jpg", "calib_camara_07.jpg", "calib_camara_08.jpg", "calib_camara_09.jpg", "calib_camara_10.jpg",
+    "calib_camara_11.jpg", "calib_camara_12.jpg", "calib_camara_13.jpg", "calib_camara_14.jpg", "calib_camara_15.jpg",
+    "calib_camara_16.jpg", "calib_camara_17.jpg", "calib_camara_18.jpg", "calib_camara_19.jpg", "calib_camara_20.jpg"
+    
+    };
 
-    //calibrateCameraFromFiles(archivos);  // Llamada a la función
+    calibrateCameraFromFiles(archivos);  // Llamada a la función
 }
 
 void interfaz_robot::MoverEje()
@@ -247,9 +243,6 @@ void interfaz_robot::VerificarRango(int valor)
 //        ui.lblPosicionActual->setText("Error al leer posición");
 //    }
 //}
-
-
-
 
 
 
@@ -375,6 +368,40 @@ void interfaz_robot::Directa() {
     //    .arg(pz, 0, 'f', 1)
     //);
 
+}
+
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
+
+
+void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M)
+{
+    std::ofstream archivo(nombreArchivo);
+    if (!archivo.is_open()) { std::cerr << "No se pudo abrir " << nombreArchivo << "\n"; return; }
+
+    archivo << M.rows << " " << M.cols << "\n";
+    for (int i = 0; i < M.rows; ++i)
+    {
+        for (int j = 0; j < M.cols; ++j)
+            archivo << M.at<double>(i, j) << " ";
+        archivo << "\n";
+    }
+}
+
+cv::Mat interfaz_robot::leerMatriz(const std::string& nombreArchivo)
+{
+    std::ifstream archivo(nombreArchivo);
+    if (!archivo.is_open()) { std::cerr << "No se pudo abrir " << nombreArchivo << "\n"; return cv::Mat(); }
+
+    int filas, columnas;
+    archivo >> filas >> columnas;
+    cv::Mat M(filas, columnas, CV_64F);
+    for (int i = 0; i < filas; ++i)
+        for (int j = 0; j < columnas; ++j)
+            archivo >> M.at<double>(i, j);
+    return M;
 }
 
 

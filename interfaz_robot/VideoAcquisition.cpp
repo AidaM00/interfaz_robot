@@ -9,7 +9,8 @@ CVideoAcquisition::CVideoAcquisition(QString videoStreamAddress)
 	//conexión con webcam
 	cameraOK = vidcap->open(1, cv::CAP_DSHOW);  // 0 para webcam
 	vidcap->set(CAP_PROP_AUTOFOCUS, 0); // desactivar autofocus
-	vidcap->set(CAP_PROP_FOCUS, 21); // establecer foco manual
+	
+	vidcap->set(CAP_PROP_FOCUS, 20); // establecer foco manual
 	//conexión con cámara ip
 	//cameraOK = vidcap->open(videoStreamAddress.toStdString());
 
@@ -83,4 +84,10 @@ Mat CVideoAcquisition::getImage()
 	mutex.unlock();
 	//re devuelve la imagen
 	return img;
+}
+void CVideoAcquisition::setFoco(int focoSet)
+{
+	
+	bool isOK=vidcap->set(CAP_PROP_FOCUS, focoSet);
+	qDebug() << "Set foco to " << focoSet << ", isOK=" << isOK;
 }

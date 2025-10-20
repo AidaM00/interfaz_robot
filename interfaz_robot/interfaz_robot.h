@@ -16,6 +16,8 @@ class interfaz_robot : public QMainWindow
 public:
     interfaz_robot(QWidget* parent = nullptr);
     ~interfaz_robot();
+    static void escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M);
+    static cv::Mat leerMatriz(const std::string& nombreArchivo);
 
 private slots:
     void HabilitarBotones(bool habilitar);

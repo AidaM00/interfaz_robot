@@ -3,12 +3,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include "interfaz_robot.h"
 
 void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
 {
     // Ajustar estos parámetros según nuestro patrón
     cv::Size boardSize(9, 6);     // Número de esquinas internas (ancho x alto)
-    float squareSize = 25.0f;     // Tamaño real de cada cuadrado en mm (o la unidad que sea)
+    float squareSize = 10.40f;     // Tamaño real de cada cuadrado en mm (o la unidad que sea)
 
     std::vector<std::vector<cv::Point2f>> imagePoints;
     std::vector<std::vector<cv::Point3f>> objectPoints;
@@ -18,7 +19,7 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     std::vector<cv::Point3f> obj;
     for (int r = 0; r < boardSize.height; ++r)
         for (int c = 0; c < boardSize.width; ++c)
-            obj.emplace_back(c * squareSize, r * squareSize, 0.0f);
+            obj.push_back(cv::Point3f(c * squareSize, r * squareSize, 0.0f));
 
     // Procesar cada imagen
     for (const auto& file : filenames)
@@ -57,7 +58,7 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     }
 
     // Validación mínima
-    if (imagePoints.size() < 6)
+    if (imagePoints.size() < 20)
     {
         std::cerr << "No hay suficientes imágenes válidas para la calibración.\n";
         return;
@@ -75,11 +76,16 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     std::cout << "Distorsión D =\n" << D << "\n\n";
 
     // Guardar parámetros
-    cv::FileStorage fs("camera_calib.yml", cv::FileStorage::WRITE);
+    interfaz_robot robot;
+    robot.escribirMatriz("K.txt", K);
+
+
+    robot.escribirMatriz("Kc.txt", D);
+    cv::FileStorage fs("camera_calib.txt", cv::FileStorage::WRITE);
     fs << "K" << K;
     fs << "D" << D;
     fs.release();
-    std::cout << "Guardado en camera_calib.yml\n";
+    std::cout << "Guardado en camera_calib.txt\n";
 
     // Mostrar corrección de una imagen
     if (!filenames.empty())
