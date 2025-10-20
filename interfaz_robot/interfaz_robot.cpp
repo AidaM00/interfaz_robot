@@ -338,11 +338,6 @@ void interfaz_robot::Directa() {
 
     
 
-    
-
-
-
-
 
 
     //// Transformación total
