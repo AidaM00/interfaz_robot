@@ -31,6 +31,7 @@ private slots:
     //void ActualizarPosicionRobot();
     void Directa();
     void CalibrarCamara();
+	void CalibrarPanel();
 
 private:
     Ui::interfaz_robotClass ui;
@@ -39,5 +40,6 @@ private:
     cv::VideoCapture cap;      // Cámara
     cv::Mat ultimoFrame;
     Ccom_robot* m_robot;
+
 };
 

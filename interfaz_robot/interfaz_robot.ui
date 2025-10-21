@@ -747,12 +747,12 @@ QPushButton:disabled {
         <rect>
          <x>120</x>
          <y>30</y>
-         <width>161</width>
+         <width>41</width>
          <height>41</height>
         </rect>
        </property>
        <property name="text">
-        <string>Iniciar comunicacion</string>
+        <string>COM</string>
        </property>
       </widget>
       <widget class="QPushButton" name="btnCalibrar">
@@ -766,6 +766,19 @@ QPushButton:disabled {
        </property>
        <property name="text">
         <string>Calibrar cámara</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btnCalibrarPanel">
+       <property name="geometry">
+        <rect>
+         <x>180</x>
+         <y>30</y>
+         <width>111</width>
+         <height>41</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Calibrar panel</string>
        </property>
       </widget>
      </widget>

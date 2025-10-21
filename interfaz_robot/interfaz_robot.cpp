@@ -11,6 +11,10 @@
 #include <array>
 #include <QString>
 #include "camera_calibration.h"
+#include <opencv2/opencv.hpp>
+#include <iostream>
+#include <fstream>
+#include <string>
 double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
 
 interfaz_robot::interfaz_robot(QWidget *parent)
@@ -27,7 +31,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
     connect(ui.btnCalibrar, SIGNAL(clicked()), this, SLOT(CalibrarCamara()));
     connect(ui.spinFoco, SIGNAL(valueChanged(int)), camara, SLOT(setFoco(int)));
-
+    connect(ui.btnCalibrarPanel, SIGNAL(clicked()), this, SLOT(CalibrarPanel()));
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -135,6 +139,39 @@ void interfaz_robot::CalibrarCamara()
     };
 
     calibrateCameraFromFiles(archivos);  // Llamada a la función
+}
+
+void interfaz_robot::CalibrarPanel()
+{
+    // Parámetros del panel
+    cv::Size boardSize(9, 6);     // Esquinas internas
+    float squareSize = 10.4f;     // mm
+
+    // Cargar parámetros intrínsecos de la cámara
+    cv::Mat K = leerMatriz("K.txt");
+    cv::Mat D = leerMatriz("Kc.txt");
+    if (K.empty() || D.empty()) 
+    {
+        QMessageBox::warning(this, "Error", "No se pudo leer K.txt o Kc.txt.");
+        return;
+    }
+
+    // Nombre del archivo de la imagen del panel
+    std::string imgFile = "calib_plano.jpg";
+
+    // Nombre del archivo donde guardar la matriz RT
+    std::string outFile = "RT_panel.txt";
+
+    bool ok = calibratePanel(imgFile, K, D, boardSize, squareSize, outFile);
+
+    if (ok)
+    {
+        QMessageBox::information(this, QString("Calibración panel"), QString("Matriz RT guardada en RT_panel.txt"));
+    }
+    else
+    {
+        QMessageBox::warning(this, QString("Error"), QString("La calibracion del panel fallo."));
+    }
 }
 
 void interfaz_robot::MoverEje()
@@ -336,6 +373,7 @@ void interfaz_robot::Directa() {
         .arg(q[5], 0, 'f', 1)
     );
 
+
     
 
 
@@ -364,11 +402,6 @@ void interfaz_robot::Directa() {
     //);
 
 }
-
-#include <opencv2/opencv.hpp>
-#include <iostream>
-#include <fstream>
-#include <string>
 
 
 void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M)

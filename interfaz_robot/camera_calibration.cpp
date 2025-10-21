@@ -5,6 +5,7 @@
 #include <string>
 #include "interfaz_robot.h"
 
+// CALIBRACIÓN DE CÁMARA
 void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
 {
     // Ajustar estos parámetros según nuestro patrón
@@ -100,4 +101,63 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
             cv::waitKey(0);
         }
     }
+}
+
+// CALIBRACIÓN DE PANEL
+bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat& D,
+    const cv::Size& boardSize, float squareSize, const std::string& outFile)
+{
+    cv::Mat img = cv::imread(imgFile);
+    if (img.empty())
+    {
+        std::cerr << "Error: no se pudo cargar la imagen del panel.\n";
+        return false;
+    }
+
+    cv::Mat gray;
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+
+    std::vector<cv::Point2f> corners;
+    bool found = cv::findChessboardCorners(gray, boardSize, corners);
+
+    if (!found)
+    {
+        std::cerr << "No se detectó el patrón en la imagen.\n";
+        return false;
+    }
+
+    cv::cornerSubPix(gray, corners, cv::Size(9, 9), cv::Size(-1, -1),
+        cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.1));
+
+    std::vector<cv::Point3f> obj;
+    for (int r = 0; r < boardSize.height; ++r)
+        for (int c = 0; c < boardSize.width; ++c)
+            obj.emplace_back(c * squareSize, r * squareSize, 0.0f);
+
+    // Pose
+    cv::Mat rvec, tvec;
+    cv::solvePnP(obj, corners, K, D, rvec, tvec);
+
+    // Matriz R 3x3
+    cv::Mat R;
+    cv::Rodrigues(rvec, R);
+
+    // Matriz homogénea 4x4 RT
+    cv::Mat RT = cv::Mat::eye(4, 4, CV_64F);
+    R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
+    tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
+
+    // Guardar RT en fichero
+    cv::FileStorage fs(outFile, cv::FileStorage::WRITE);
+    fs << "RT" << RT;
+    fs.release();
+
+    std::cout << "Calibración del panel completada. RT =\n" << RT << std::endl;
+
+    cv::Mat vis = img.clone();
+    cv::drawChessboardCorners(vis, boardSize, corners, true);
+    cv::imshow("Panel detectado", vis);
+    cv::waitKey(500);
+
+    return true;
 }
