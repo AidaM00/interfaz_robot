@@ -13,5 +13,7 @@ bool calibratePanel(const std::string& imgFile,
     const cv::Size& boardSize,
     float squareSize,
     const std::string& outFile);
+bool calibrateCameraRobot(int numImages, const cv::Size& boardSize, float squareSize,
+    const cv::Mat& K, const cv::Mat& D, const std::string& outFile);
 
 #endif // CAMERA_CALIBRATION_H

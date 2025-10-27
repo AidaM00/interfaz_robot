@@ -15,7 +15,17 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <iomanip>
+#include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
+int contador = 1; // Contador global para los archivos (calib cámara-robot)
+// Parámetros del panel
+cv::Size boardSize(9, 6);     // Esquinas internas
+float squareSize = 10.4f;     // mm
 
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
@@ -25,13 +35,15 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
     connect(ui.btnInicio, SIGNAL(clicked()), this, SLOT(startStopCapture()));
-    connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
+    //connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
     connect(ui.btnMover1, SIGNAL(clicked()), this, SLOT(MoverEje()));
     connect(ui.btnMoverTodos, SIGNAL(clicked()), this, SLOT(MoverTodosLosEjes()));
     connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
     connect(ui.btnCalibrar, SIGNAL(clicked()), this, SLOT(CalibrarCamara()));
     connect(ui.spinFoco, SIGNAL(valueChanged(int)), camara, SLOT(setFoco(int)));
     connect(ui.btnCalibrarPanel, SIGNAL(clicked()), this, SLOT(CalibrarPanel()));
+    connect(ui.btnPoses, SIGNAL(clicked()), this, SLOT(GuardarImagenYPose()));
+    connect(ui.btnCalibrarCamaraRobot, SIGNAL(clicked()), this, SLOT(CalibrarCamaraRobot()));
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -107,34 +119,14 @@ void interfaz_robot::MostrarVideo()
     ui.lblInicio->setPixmap(QPixmap::fromImage(img));
 }
 
-void interfaz_robot::GuardarImagen()
-{
-    cv::Mat img = camara->getImage();  // Obtener la imagen actual de la cámara
-    if (!img.empty()) {
-        // Obtener la fecha y hora actual
-        std::time_t t = std::time(nullptr);
-        std::tm now;
-        localtime_s(&now, &t);  // Usar la versión segura localtime_s
-
-        // Crear nombre de archivo con timestamp: captura_YYYYMMDD_HHMMSS.jpg
-        char nombreArchivo[50];
-        std::strftime(nombreArchivo, sizeof(nombreArchivo), "captura_%Y%m%d_%H%M%S.jpg", &now);
-
-        cv::imwrite(nombreArchivo, img);  // Guardar la imagen en un archivo
-    }
-    else {
-        qDebug() << "Error: No hay imagen para guardar.";
-    }
-}
-
 void interfaz_robot::CalibrarCamara()
 {
     //// Lista de archivos de calibración
     std::vector<std::string> archivos = {
-    "calib_camara_01.jpg", "calib_camara_02.jpg", "calib_camara_03.jpg", "calib_camara_04.jpg", "calib_camara_05.jpg",
-    "calib_camara_06.jpg", "calib_camara_07.jpg", "calib_camara_08.jpg", "calib_camara_09.jpg", "calib_camara_10.jpg",
-    "calib_camara_11.jpg", "calib_camara_12.jpg", "calib_camara_13.jpg", "calib_camara_14.jpg", "calib_camara_15.jpg",
-    "calib_camara_16.jpg", "calib_camara_17.jpg", "calib_camara_18.jpg", "calib_camara_19.jpg", "calib_camara_20.jpg"
+    "calib_camara_01.png", "calib_camara_02.png", "calib_camara_03.png", "calib_camara_04.png", "calib_camara_05.png",
+    "calib_camara_06.png", "calib_camara_07.png", "calib_camara_08.png", "calib_camara_09.png", "calib_camara_10.png",
+    "calib_camara_11.png", "calib_camara_12.png", "calib_camara_13.png", "calib_camara_14.png", "calib_camara_15.png",
+    "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png"
     
     };
 
@@ -143,10 +135,6 @@ void interfaz_robot::CalibrarCamara()
 
 void interfaz_robot::CalibrarPanel()
 {
-    // Parámetros del panel
-    cv::Size boardSize(9, 6);     // Esquinas internas
-    float squareSize = 10.4f;     // mm
-
     // Cargar parámetros intrínsecos de la cámara
     cv::Mat K = leerMatriz("K.txt");
     cv::Mat D = leerMatriz("Kc.txt");
@@ -157,7 +145,7 @@ void interfaz_robot::CalibrarPanel()
     }
 
     // Nombre del archivo de la imagen del panel
-    std::string imgFile = "calib_plano.jpg";
+    std::string imgFile = "calib_panel.png";
 
     // Nombre del archivo donde guardar la matriz RT
     std::string outFile = "RT_panel.txt";
@@ -431,6 +419,84 @@ cv::Mat interfaz_robot::leerMatriz(const std::string& nombreArchivo)
             archivo >> M.at<double>(i, j);
     return M;
 }
+
+// Función para guardar imagen y pose del robot
+void interfaz_robot::GuardarImagenYPose()
+{
+    cv::Mat img = camara->getImage();  // Obtener la imagen actual de la cámara
+    if (img.empty()) {
+        qDebug() << "Error: no hay imagen para guardar.";
+        return;
+    }
+
+    // Usamos el mismo contador para imagen y pose
+    int numArchivo = contador;
+
+    // Guardar la imagen
+    std::ostringstream nombreImagen;
+    nombreImagen << "imagen_" << std::setw(2) << std::setfill('0') << numArchivo << ".png";
+    cv::imwrite(nombreImagen.str(), img);
+    qDebug() << "Imagen guardada:" << QString::fromStdString(nombreImagen.str());
+
+    // Guardar la pose
+    std::ostringstream nombrePose;
+    nombrePose << "pose_" << std::setw(2) << std::setfill('0') << numArchivo << ".txt";
+
+    std::ofstream archivoPose(nombrePose.str());
+    if (archivoPose.is_open()) {
+        for (int i = 0; i < 6; ++i)
+            archivoPose << q[i] << (i < 5 ? " " : "");
+        archivoPose << std::endl;
+        archivoPose.close();
+        qDebug() << "Pose guardada:" << QString::fromStdString(nombrePose.str());
+    }
+    else {
+        qDebug() << "Error: no se pudo abrir el archivo de pose.";
+    }
+
+    // Incrementar el contador una sola vez
+    contador++;
+}
+
+void interfaz_robot::CalibrarCamaraRobot()
+{
+    // Contar cuántas parejas imagen-pose existen
+    int numImages = 0;
+    for (const auto& entry : fs::directory_iterator(".")) {
+        std::string name = entry.path().filename().string();
+        if (name.find("imagen_") == 0 && name.find(".png") != std::string::npos) {
+            numImages++;
+        }
+    }
+
+    if (numImages == 0) {
+        QMessageBox::warning(this, "Error", "No se encontraron imágenes para calibrar.");
+        return;
+    }
+
+    // Leer parámetros de cámara ya calibrada
+    Mat K = leerMatriz("K.txt");
+    Mat D = leerMatriz("Kc.txt");
+    if (K.empty() || D.empty()) {
+        qDebug() << "Error: No se pudo leer K.txt o Kc.txt.";
+        return;
+    }
+
+    // Archivo de salida
+    string outFile = "RT_camara_robot.txt";
+
+    // Ejecutar calibración
+    bool ok = calibrateCameraRobot(numImages, boardSize, squareSize, K, D, outFile);
+
+    if (ok)
+        qDebug() << "Calibracion completa. RT camara-robot guardada";
+    else
+        qDebug() << "Error: La calibracion camara-robot fallo.";
+}
+
+
+
+
 
 
 

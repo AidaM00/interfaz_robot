@@ -23,7 +23,6 @@ private slots:
     void HabilitarBotones(bool habilitar);
     void startStopCapture();
     void MostrarVideo();
-    void GuardarImagen();
     void MoverEje();
     void MoverTodosLosEjes();
     void VerificarRango(int valor);
@@ -32,6 +31,8 @@ private slots:
     void Directa();
     void CalibrarCamara();
 	void CalibrarPanel();
+	void GuardarImagenYPose();
+	void CalibrarCamaraRobot();
 
 private:
     Ui::interfaz_robotClass ui;
