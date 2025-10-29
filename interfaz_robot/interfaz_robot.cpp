@@ -35,7 +35,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
     connect(ui.btnInicio, SIGNAL(clicked()), this, SLOT(startStopCapture()));
-    //connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
+    connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
     connect(ui.btnMover1, SIGNAL(clicked()), this, SLOT(MoverEje()));
     connect(ui.btnMoverTodos, SIGNAL(clicked()), this, SLOT(MoverTodosLosEjes()));
     connect(ui.btnComunicacionrobot, SIGNAL(clicked()), this, SLOT(iniciarComRobot()));
@@ -117,6 +117,26 @@ void interfaz_robot::MostrarVideo()
     QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
     ui.lblInicio->setPixmap(QPixmap::fromImage(img));
+}
+
+void interfaz_robot::GuardarImagen()
+{
+    cv::Mat img = camara->getImage();  // Obtener la imagen actual de la cámara
+    if (!img.empty()) {
+        // Obtener la fecha y hora actual
+        std::time_t t = std::time(nullptr);
+        std::tm now;
+        localtime_s(&now, &t);  // Usar la versión segura localtime_s
+
+        // Crear nombre de archivo con timestamp: captura_YYYYMMDD_HHMMSS.png
+        char nombreArchivo[50];
+        std::strftime(nombreArchivo, sizeof(nombreArchivo), "captura_%Y%m%d_%H%M%S.png", &now);
+
+        cv::imwrite(nombreArchivo, img);  // Guardar la imagen en un archivo
+    }
+    else {
+        qDebug() << "Error: No hay imagen para guardar.";
+    }
 }
 
 void interfaz_robot::CalibrarCamara()

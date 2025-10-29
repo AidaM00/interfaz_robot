@@ -23,6 +23,7 @@ private slots:
     void HabilitarBotones(bool habilitar);
     void startStopCapture();
     void MostrarVideo();
+    void GuardarImagen();
     void MoverEje();
     void MoverTodosLosEjes();
     void VerificarRango(int valor);
