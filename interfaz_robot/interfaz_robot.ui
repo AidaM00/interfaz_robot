@@ -807,6 +807,19 @@ QPushButton:disabled {
         <string>Calib cam robot</string>
        </property>
       </widget>
+      <widget class="QPushButton" name="btnProcesar">
+       <property name="geometry">
+        <rect>
+         <x>380</x>
+         <y>40</y>
+         <width>75</width>
+         <height>24</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Procesar</string>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
