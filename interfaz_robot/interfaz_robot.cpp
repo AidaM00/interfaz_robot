@@ -18,6 +18,7 @@
 #include <iomanip>
 #include <sstream>
 #include <filesystem>
+#include "procesado.h"
 
 namespace fs = std::filesystem;
 
@@ -44,6 +45,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnCalibrarPanel, SIGNAL(clicked()), this, SLOT(CalibrarPanel()));
     connect(ui.btnPoses, SIGNAL(clicked()), this, SLOT(GuardarImagenYPose()));
     connect(ui.btnCalibrarCamaraRobot, SIGNAL(clicked()), this, SLOT(CalibrarCamaraRobot()));
+    connect(ui.btnProcesar, SIGNAL(clicked()), this, SLOT(ProcesarImagen()));
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -477,7 +479,37 @@ void interfaz_robot::CalibrarCamaraRobot()
     else
         qDebug() << "Error: La calibracion camara-robot fallo.";
 }
+void interfaz_robot::ProcesarImagen()
+{
+    // Cargar parámetros de cámara calibrada
+    cv::Mat K = leerMatriz("K.txt");
+    cv::Mat D = leerMatriz("Kc.txt");
 
+    Procesado proc(K, D);
+
+    cv::Mat frame = camara->getImage();
+    if (frame.empty()) {
+        qDebug() << "No hay imagen disponible.";
+        return;
+    }
+
+    cv::Mat salida;
+    cv::Point centro = proc.detectarPieza(frame, salida);
+
+    // === Aplicar transformación de perspectiva ===
+    // (debes definir los 4 puntos del área de interés)
+    std::vector<cv::Point2f> srcPts = {
+        cv::Point2f(100, 100),
+        cv::Point2f(500, 100),
+        cv::Point2f(500, 400),
+        cv::Point2f(100, 400)
+    };
+    cv::Mat rectificada = proc.transformarPerspectiva(frame, srcPts, cv::Size(400, 300));
+
+    // Mostrar resultados
+    cv::imshow("Segmentacion", salida);
+    cv::imshow("Rectificada", rectificada);
+}
 
 
 

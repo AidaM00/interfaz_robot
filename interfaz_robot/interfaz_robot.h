@@ -6,6 +6,7 @@
 #include "VideoAcquisition.h"
 #include "ui_interfaz_robot.h"
 #include "com_robot.h"
+#include "procesado.h"
 
 namespace Ui { class interfaz_robot; }
 
@@ -34,6 +35,7 @@ private slots:
 	void CalibrarPanel();
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
+	void ProcesarImagen();
 
 private:
     Ui::interfaz_robotClass ui;

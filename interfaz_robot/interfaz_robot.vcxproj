@@ -112,6 +112,7 @@
   <ItemGroup>
     <ClCompile Include="camera_calibration.cpp" />
     <ClCompile Include="com_robot.cpp" />
+    <ClCompile Include="procesado.cpp" />
     <ClCompile Include="VideoAcquisition.cpp" />
     <QtRcc Include="interfaz_robot.qrc" />
     <QtUic Include="interfaz_robot.ui" />
@@ -127,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera_calibration.h" />
+    <ClInclude Include="procesado.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

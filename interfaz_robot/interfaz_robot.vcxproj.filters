@@ -49,6 +49,9 @@
     <ClCompile Include="camera_calibration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="procesado.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="VideoAcquisition.h">
@@ -60,6 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera_calibration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="procesado.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
