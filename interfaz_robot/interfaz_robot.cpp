@@ -118,7 +118,16 @@ void interfaz_robot::MostrarVideo()
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
     QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
-    ui.lblInicio->setPixmap(QPixmap::fromImage(img));
+    ui.lblInicio->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    ui.lblInicio->setPixmap(
+        QPixmap::fromImage(img).scaled(
+            ui.lblInicio->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+        )
+    );
+    
+
 }
 
 void interfaz_robot::GuardarImagen()
@@ -479,45 +488,33 @@ void interfaz_robot::CalibrarCamaraRobot()
     else
         qDebug() << "Error: La calibracion camara-robot fallo.";
 }
-void interfaz_robot::ProcesarImagen()
-{
-    // Cargar parámetros de cámara calibrada
-    cv::Mat K = leerMatriz("K.txt");
-    cv::Mat D = leerMatriz("Kc.txt");
-
-    Procesado proc(K, D);
-
-    cv::Mat frame = camara->getImage();
-    if (frame.empty()) {
-        qDebug() << "No hay imagen disponible.";
-        return;
-    }
-
-    cv::Mat salida;
-    cv::Point centro = proc.detectarPieza(frame, salida);
-
-    // === Aplicar transformación de perspectiva ===
-    // (debes definir los 4 puntos del área de interés)
-    std::vector<cv::Point2f> srcPts = {
-        cv::Point2f(100, 100),
-        cv::Point2f(500, 100),
-        cv::Point2f(500, 400),
-        cv::Point2f(100, 400)
-    };
-    cv::Mat rectificada = proc.transformarPerspectiva(frame, srcPts, cv::Size(400, 300));
-
-    // Mostrar resultados
-    cv::imshow("Segmentacion", salida);
-    cv::imshow("Rectificada", rectificada);
-}
-
-
-
-
-
 
 //void interfaz_robot::Limpiar()
 //{
 //    ui.lbimagen->clear();  // Limpiar la QLabel
 //}
+
+
+cv::Mat interfaz_robot::ProcesarImagen() {
+
+    // Quitar fondo
+    std::string rutaImagen = "pieza00.png"; 
+    cv::Mat img = cv::imread(rutaImagen);
+
+    if (img.empty()) {
+        std::cout << "No se pudo cargar la imagen\n";
+        return cv::Mat();
+    }
+
+    cv::Mat resultado = recortarYReescalar(img);
+
+    // Mostrar resultados 
+    cv::imshow("Original", img);
+    cv::imshow("Sin fondo", resultado);
+    cv::waitKey(1); // refrescar ventana 
+
+    return resultado;
+}
+
+
 

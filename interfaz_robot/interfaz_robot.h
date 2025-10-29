@@ -35,7 +35,7 @@ private slots:
 	void CalibrarPanel();
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
-	void ProcesarImagen();
+    cv::Mat ProcesarImagen();
 
 private:
     Ui::interfaz_robotClass ui;

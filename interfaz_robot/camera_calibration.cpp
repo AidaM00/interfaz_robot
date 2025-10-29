@@ -52,8 +52,8 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
             cv::Mat vis;
             cv::cvtColor(img, vis, cv::COLOR_GRAY2BGR);
             cv::drawChessboardCorners(vis, boardSize, corners, found);
-            cv::imshow("Esquinas detectadas", vis);
-            cv::waitKey(200);
+            //cv::imshow("Esquinas detectadas", vis);
+            //cv::waitKey(200);
         }
         else
         {
@@ -99,8 +99,8 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
         {
             cv::Mat und;
             cv::undistort(img, und, K, D);
-            cv::imshow("Original", img);
-            cv::imshow("Undistorted", und);
+            //cv::imshow("Original", img);
+            //cv::imshow("Undistorted", und);
             cv::waitKey(0);
         }
     }
