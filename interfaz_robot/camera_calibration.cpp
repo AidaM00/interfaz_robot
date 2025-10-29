@@ -166,7 +166,7 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
 }
 
 
-// Convertir pose q[6] a posición TCP en 3D (cinemática directa)
+// Convertir pose q[6] a posición TCP en 3D
 cv::Point3f poseToTCP(const double q[6])
 {
     double q1 = q[0] * M_PI / 180.0;

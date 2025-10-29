@@ -345,12 +345,6 @@ void interfaz_robot::Directa() {
     double py = s1 * S;
     double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
 	// Mostrar la posición P
-    //ui.lblPosicionActual->setText(
-    //    QString("Pos: [X=%1, Y=%2, Z=%3] mm")
-    //    .arg(px, 0, 'f', 1)
-    //    .arg(py, 0, 'f', 1)
-    //    .arg(pz, 0, 'f', 1)
-    //);
     ui.lblPosicionActual->setText(
         QString("Pos actual: [ %1, %2, %3, %4, %5, %6 ] grados")
         .arg(q[0], 0, 'f', 1)
@@ -360,37 +354,7 @@ void interfaz_robot::Directa() {
         .arg(q[4], 0, 'f', 1)
         .arg(q[5], 0, 'f', 1)
     );
-
-
-    
-
-
-
-    //// Transformación total
-    //Mat4 RTbt = matIdentity();
-    //RTbt = matMul(RTbt, Rz(q1));
-    //RTbt = matMul(RTbt, Tz(a1));
-    //RTbt = matMul(RTbt, Ry(q2));
-    //RTbt = matMul(RTbt, Tz(a2));
-    //RTbt = matMul(RTbt, Ry(q3));
-    //RTbt = matMul(RTbt, Tz(a3));
-    //RTbt = matMul(RTbt, Ry(q4));
-    //RTbt = matMul(RTbt, Tz(a4));
-    //RTbt = matMul(RTbt, Rz(q5));
-    //RTbt = matMul(RTbt, Tz(a5));
-
-    //// Posición
-    //double px = RTbt[0][3], py = RTbt[1][3], pz = RTbt[2][3];
-
-    //ui.lblPosicionActual->setText(
-    //    QString("Pos: [X=%1, Y=%2, Z=%3] mm")
-    //    .arg(px, 0, 'f', 1)
-    //    .arg(py, 0, 'f', 1)
-    //    .arg(pz, 0, 'f', 1)
-    //);
-
 }
-
 
 void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M)
 {
