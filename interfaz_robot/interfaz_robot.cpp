@@ -499,12 +499,11 @@ void interfaz_robot::CalibrarCamaraRobot()
 cv::Mat interfaz_robot::ProcesarImagen() {
     namespace fs = std::filesystem;
     fs::path rutaEjecutable = fs::current_path();
-
     std::vector<fs::path> imagenes;
+
     for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
         std::string nombre = entry.path().filename().string();
-        if (nombre.rfind("pieza_", 0) == 0 &&
-            nombre.find("segmentada") == std::string::npos &&
+        if (nombre.rfind("pieza_", 0) == 0 && nombre.find("segmentada") == std::string::npos &&
             entry.path().extension() == ".png") {
             imagenes.push_back(entry.path());
         }
@@ -515,88 +514,96 @@ cv::Mat interfaz_robot::ProcesarImagen() {
         return cv::Mat();
     }
 
+    std::sort(imagenes.begin(), imagenes.end());
     cv::Mat ultimaProcesada;
 
     for (const auto& rutaImagen : imagenes) {
         std::cout << "Procesando: " << rutaImagen << std::endl;
-
         cv::Mat img = cv::imread(rutaImagen.string());
         if (img.empty()) {
             std::cerr << "No se pudo cargar " << rutaImagen << "\n";
             continue;
         }
 
+        // === 1. Recortar y reescalar ===
         cv::Mat procesada = recortarYReescalar(img);
         if (procesada.empty()) {
             std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
             continue;
         }
 
-        // --- PROCESAMIENTO ROBUSTO PARA VARIAS PIEZAS ---
-        cv::Mat gris, suavizada, fondoSuavizado, fondoRestado, ecualizada, binaria, limpia, salida;
-
-        // Convertir a escala de grises
+        // === 2. Convertir a escala de grises ===
+        cv::Mat gris;
         cv::cvtColor(procesada, gris, cv::COLOR_BGR2GRAY);
 
-        // Filtro bilateral: suaviza el fondo manteniendo bordes
-        cv::bilateralFilter(gris, suavizada, 9, 75, 75);
+        // === 3. Filtro de suavizado ===
+        cv::Mat suavizada;
+        cv::GaussianBlur(gris, suavizada, cv::Size(5, 5), 0);
+        cv::medianBlur(suavizada, suavizada, 5);
 
-        // Estimar fondo con filtro morfológico grande y restarlo
-        cv::morphologyEx(suavizada, fondoSuavizado, cv::MORPH_CLOSE,
-            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20)));
-        cv::subtract(fondoSuavizado, suavizada, fondoRestado);
+        // === 4. Umbral adaptativo ===
+        cv::Mat binaria;
+        cv::adaptiveThreshold(
+            suavizada, binaria, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv::THRESH_BINARY_INV, 21, 3
+        );
 
-        // Ecualización adaptativa (CLAHE)
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
-        clahe->apply(fondoRestado, ecualizada);
+        // === 5. Morfología para limpiar ruido ===
+        cv::Mat kernelCierre = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7));
+        cv::morphologyEx(binaria, binaria, cv::MORPH_CLOSE, kernelCierre, cv::Point(-1, -1), 1);
+        cv::Mat kernelApertura = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::morphologyEx(binaria, binaria, cv::MORPH_OPEN, kernelApertura, cv::Point(-1, -1), 1);
 
-        // Umbral adaptativo
-        cv::adaptiveThreshold(ecualizada, binaria, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv::THRESH_BINARY_INV, 25, 5);
-
-        // Operaciones morfológicas: abrir para eliminar ruido y cerrar para unir regiones
-// Operaciones morfológicas: primero cerrar huecos, luego eliminar ruido
-        cv::morphologyEx(binaria, limpia, cv::MORPH_CLOSE,
-            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9)));
-        cv::morphologyEx(limpia, limpia, cv::MORPH_OPEN,
-            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)));
-
-
-
-        // Encontrar contornos
+        // === 6. Detección de contornos ===
         std::vector<std::vector<cv::Point>> contornos;
-        std::vector<cv::Vec4i> jerarquia;
-        cv::findContours(limpia.clone(), contornos, jerarquia, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        cv::findContours(binaria.clone(), contornos, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-        // Crear máscara y eliminar objetos pequeños (<500 px)
-        cv::Mat mascara = cv::Mat::zeros(limpia.size(), CV_8UC1);
+        // === 7. Filtrar contornos por área y bordes (sin elipses) ===
+        cv::Mat plano = cv::Mat::zeros(binaria.size(), CV_8UC1);
+        double areaMinima = procesada.cols * procesada.rows * 0.001;
+        std::vector<std::vector<cv::Point>> contornosValidos;
         for (const auto& c : contornos) {
             double area = cv::contourArea(c);
-            if (area >= 10000.0) // solo conserva objetos grandes
-                cv::drawContours(mascara, std::vector<std::vector<cv::Point>>{c}, -1, 255, cv::FILLED);
+            if (area < areaMinima) continue;
+            // Eliminar contornos que tocan los bordes
+            cv::Rect bbox = cv::boundingRect(c);
+            if (bbox.x <= 1 || bbox.y <= 1 ||
+                bbox.x + bbox.width >= procesada.cols - 1 ||
+                bbox.y + bbox.height >= procesada.rows - 1) continue;
+            contornosValidos.push_back(c);
         }
 
-        // Convertir a color para dibujar contornos
-        cv::cvtColor(mascara, salida, cv::COLOR_GRAY2BGR);
+        // === 8. Mejorar unión de contornos según proximidad ===
+        cv::drawContours(plano, contornosValidos, -1, 255, cv::FILLED);
+        cv::Mat kernelDilate = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(5, 5));
+        cv::dilate(plano, plano, kernelDilate);
+        cv::Mat kernelBlur = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
+        cv::morphologyEx(plano, plano, cv::MORPH_OPEN, kernelBlur);
 
-        // Dibujar contornos solo para objetos grandes (>= 500 px)
-        for (const auto& c : contornos) {
-            double area = cv::contourArea(c);
-            if (area >= 10000.0)
-                cv::drawContours(salida, std::vector<std::vector<cv::Point>>{c}, -1, cv::Scalar(0, 0, 255), 2);
-        }
+        // === 9. Dibujar contornos finales sobre imagen procesada ===
+        std::vector<std::vector<cv::Point>> contornosFinales;
+        cv::findContours(plano.clone(), contornosFinales, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+        cv::Mat salidaColor;
+        cv::cvtColor(plano, salidaColor, cv::COLOR_GRAY2BGR);
+        cv::drawContours(salidaColor, contornosFinales, -1, cv::Scalar(0, 0, 255), 2);
 
-        // Guardar resultado
-        fs::path rutaSalida = rutaImagen.parent_path() / (rutaImagen.stem().string() + "_segmentada.png");
-        cv::imwrite(rutaSalida.string(), salida);
-
-        ultimaProcesada = salida.clone();
-
-        std::cout << "Imagen segmentada guardada en: " << rutaSalida << std::endl;
+        // === 10. Guardar resultado ===
+        fs::path rutaColor = rutaImagen.parent_path() / (rutaImagen.stem().string() + "_segmentada.png");
+        cv::imwrite(rutaColor.string(), salidaColor);
+        std::cout << "Guardada la imagen segmentada: " << rutaColor << std::endl;
+        ultimaProcesada = salidaColor.clone();
     }
 
     return ultimaProcesada;
 }
+
+
+
+
+
+
+
+
 
 
 
