@@ -154,15 +154,13 @@ void interfaz_robot::GuardarImagen()
 
 void interfaz_robot::CalibrarCamara()
 {
-    //// Lista de archivos de calibración
+    // Lista de archivos de calibración
     std::vector<std::string> archivos = {
-     "calib_camara_01.png","calib_camara_02.png", "calib_camara_03.png" "calib_camara_04.png", "calib_camara_05.png",
+    "calib_camara_01.png", "calib_camara_02.png", "calib_camara_03.png", "calib_camara_04.png", "calib_camara_05.png",
     "calib_camara_06.png", "calib_camara_07.png", "calib_camara_08.png", "calib_camara_09.png", "calib_camara_10.png",
     "calib_camara_11.png", "calib_camara_12.png", "calib_camara_13.png", "calib_camara_14.png", "calib_camara_15.png",
-     "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png",
+    "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png",
     "calib_camara_21.png", "calib_camara_22.png", "calib_camara_23.png", "calib_camara_24.png"
-   
-    
     };
 
     calibrateCameraFromFiles(archivos);  // Llamada a la función
@@ -248,11 +246,11 @@ void interfaz_robot::MoverTodosLosEjes()
         }
     }
 
-    // Construir el comando tipo: #a-45-0-30-90--30-60*
+    // Construir el comando tipo: #a45,0,30,90,-30,60*
     QString comando = "#a";
     for (int i = 0; i < 6; ++i) {
         comando += QString::number(angulos[i]);
-        if (i < 5) comando += "-";
+        if (i < 5) comando += ",";
     }
     comando += "*";
 
@@ -498,11 +496,19 @@ void interfaz_robot::CalibrarCamaraRobot()
 //    ui.lbimagen->clear();  // Limpiar la QLabel
 //}
 
+
+
+
+
+
+
+
 cv::Mat interfaz_robot::ProcesarImagen() {
     namespace fs = std::filesystem;
     fs::path rutaEjecutable = fs::current_path();
     std::vector<fs::path> imagenes;
 
+    // Buscar imágenes "pieza_*.png" no segmentadas
     for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
         std::string nombre = entry.path().filename().string();
         if (nombre.rfind("pieza_", 0) == 0 &&
@@ -528,20 +534,20 @@ cv::Mat interfaz_robot::ProcesarImagen() {
             continue;
         }
 
-        // === 1. Recortar y reescalar ===
+        // Recortar y reescalar
         cv::Mat procesada = recortarYReescalar(img);
         if (procesada.empty()) {
             std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
             continue;
         }
 
-        // === 2. Escala de grises y suavizado ===
+        // Escala de grises y suavizado
         cv::Mat gris;
         cv::cvtColor(procesada, gris, cv::COLOR_BGR2GRAY);
         cv::GaussianBlur(gris, gris, cv::Size(5, 5), 0);
         cv::medianBlur(gris, gris, 5);
 
-        // === 3. Umbral adaptativo ===
+        // Umbral adaptativo
         cv::Mat binaria;
         cv::adaptiveThreshold(
             gris, binaria, 255,
@@ -549,7 +555,7 @@ cv::Mat interfaz_robot::ProcesarImagen() {
             cv::THRESH_BINARY_INV, 21, 3
         );
 
-        // === 4. Morfología (limpieza) ===
+        // Morfología (limpieza)
         cv::morphologyEx(binaria, binaria, cv::MORPH_CLOSE,
             cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7)));
         cv::morphologyEx(binaria, binaria, cv::MORPH_OPEN,
@@ -557,14 +563,14 @@ cv::Mat interfaz_robot::ProcesarImagen() {
         cv::dilate(binaria, binaria,
             cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7)));
 
-        // === 5. Contornos ===
+        // Contornos
         std::vector<std::vector<cv::Point>> contornos;
         cv::findContours(binaria.clone(), contornos, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
         cv::Mat salidaBinaria = cv::Mat::zeros(binaria.size(), CV_8UC1);
-        const double areaMinima = 20000.0;
+        const double areaMinima = 14000.0;
 
-        std::vector<cv::Rect> bboxesValidas;
+        std::vector<cv::RotatedRect> cajasRotadas;
         std::vector<double> areasValidas;
         std::vector<std::vector<cv::Point>> contornosValidos;
 
@@ -572,52 +578,56 @@ cv::Mat interfaz_robot::ProcesarImagen() {
             double area = cv::contourArea(c);
             if (area >= areaMinima) {
                 cv::drawContours(salidaBinaria, std::vector<std::vector<cv::Point>>{c}, -1, 255, cv::FILLED);
-                bboxesValidas.push_back(cv::boundingRect(c));
+                cv::RotatedRect box = cv::minAreaRect(c);
+                cajasRotadas.push_back(box);
                 areasValidas.push_back(area);
                 contornosValidos.push_back(c);
             }
         }
 
-        std::cout << "Objetos detectados: " << bboxesValidas.size() << std::endl;
+        std::cout << "Objetos detectados: " << cajasRotadas.size() << std::endl;
 
-        // === 6. Imagen final color ===
+        // Imagen final color
         cv::Mat salidaFinal;
         cv::cvtColor(salidaBinaria, salidaFinal, cv::COLOR_GRAY2BGR);
 
-        for (size_t i = 0; i < bboxesValidas.size(); ++i) {
-
-            // --- 6.1 Suavizado del contorno ---
+        for (size_t i = 0; i < cajasRotadas.size(); ++i) {
+            // Contorno suavizado
             std::vector<cv::Point> contornoSuave;
             cv::approxPolyDP(contornosValidos[i], contornoSuave, 2.0, true);
 
             // Contorno rojo
             cv::drawContours(salidaFinal, std::vector<std::vector<cv::Point>>{contornoSuave}, -1, cv::Scalar(0, 0, 255), 2);
 
-            // Bounding box azul
-            cv::rectangle(salidaFinal, bboxesValidas[i], cv::Scalar(255, 0, 0), 2);
+            // Rectángulo rotado azul
+            cv::Point2f vertices[4];
+            cajasRotadas[i].points(vertices);
+            for (int j = 0; j < 4; j++) {
+                cv::line(salidaFinal, vertices[j], vertices[(j + 1) % 4], cv::Scalar(255, 0, 0), 2);
+            }
 
-            // --- 6.2 Centroide ---
+            // Centroide
             cv::Moments m = cv::moments(contornosValidos[i]);
             int cx = static_cast<int>(m.m10 / m.m00);
             int cy = static_cast<int>(m.m01 / m.m00);
-            cv::circle(salidaFinal, cv::Point(cx, cy), 5, cv::Scalar(0, 255, 255), -1);
+            cv::circle(salidaFinal, cv::Point(cx, cy), 5, cv::Scalar(0, 255, 0), -1);
 
-            // Texto área + centroide
-            std::string texto = "A=" + std::to_string(static_cast<int>(areasValidas[i]));
+            // Texto área + ángulo
+            std::string texto = "A=" + std::to_string(static_cast<int>(areasValidas[i])) +
+                " ang=" + std::to_string(static_cast<int>(cajasRotadas[i].angle));
             cv::putText(salidaFinal, texto,
-                cv::Point(bboxesValidas[i].x, bboxesValidas[i].y - 5),
+                cv::Point(static_cast<int>(cajasRotadas[i].center.x), static_cast<int>(cajasRotadas[i].center.y) - 10),
                 cv::FONT_HERSHEY_SIMPLEX, 0.6,
                 cv::Scalar(0, 255, 255), 2);
 
             std::cout << "Objeto " << i + 1
                 << " -> Area=" << static_cast<int>(areasValidas[i])
-                << "  BBox(" << bboxesValidas[i].x << ", " << bboxesValidas[i].y
-                << ", " << bboxesValidas[i].width << "x" << bboxesValidas[i].height << ")"
-                << "  Centroide(" << cx << "," << cy << ")"
+                << "  Centro(" << cx << "," << cy << ")"
+                << "  Ángulo=" << cajasRotadas[i].angle
                 << std::endl;
         }
 
-        // === 7. Guardar imagen final ===
+        // Guardar imagen final
         fs::path rutaSalida = rutaImagen.parent_path() /
             (rutaImagen.stem().string() + "_segmentada.png");
         cv::imwrite(rutaSalida.string(), salidaFinal);
@@ -627,6 +637,7 @@ cv::Mat interfaz_robot::ProcesarImagen() {
 
     return ultimaProcesada;
 }
+
 
 
 

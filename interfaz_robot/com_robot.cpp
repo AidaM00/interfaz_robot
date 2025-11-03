@@ -28,7 +28,7 @@ Ccom_robot::~Ccom_robot()
 void Ccom_robot::mover(int eje, int angulo)
 {
 	QString comando;
-	comando = "#m" + QString::number(eje) + "-" + QString::number(angulo) + "*";
+	comando = "#m" + QString::number(eje) + "," + QString::number(angulo) + "*";
 	m_serial.write(comando.toLatin1().data());
 }
 

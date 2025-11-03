@@ -456,6 +456,9 @@ QPushButton:hover {
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::UpDownArrows</enum>
         </property>
+        <property name="minimum">
+         <number>-30</number>
+        </property>
        </widget>
        <widget class="QPushButton" name="btnMoverTodos">
         <property name="geometry">
