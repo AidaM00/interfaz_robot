@@ -62,7 +62,7 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     }
 
     // Validación mínima
-    if (imagePoints.size() < 20)
+    if (imagePoints.size() < 10)
     {
         std::cerr << "No hay suficientes imágenes válidas para la calibración.\n";
         return;

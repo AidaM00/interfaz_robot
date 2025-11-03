@@ -156,10 +156,12 @@ void interfaz_robot::CalibrarCamara()
 {
     //// Lista de archivos de calibración
     std::vector<std::string> archivos = {
-    "calib_camara_01.png", "calib_camara_02.png", "calib_camara_03.png", "calib_camara_04.png", "calib_camara_05.png",
+     "calib_camara_01.png","calib_camara_02.png", "calib_camara_03.png" "calib_camara_04.png", "calib_camara_05.png",
     "calib_camara_06.png", "calib_camara_07.png", "calib_camara_08.png", "calib_camara_09.png", "calib_camara_10.png",
     "calib_camara_11.png", "calib_camara_12.png", "calib_camara_13.png", "calib_camara_14.png", "calib_camara_15.png",
-    "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png"
+     "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png",
+    "calib_camara_21.png", "calib_camara_22.png", "calib_camara_23.png", "calib_camara_24.png"
+   
     
     };
 
