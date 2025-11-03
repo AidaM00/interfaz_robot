@@ -505,7 +505,9 @@ cv::Mat interfaz_robot::ProcesarImagen() {
 
     for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
         std::string nombre = entry.path().filename().string();
-        if (nombre.rfind("pieza_", 0) == 0 && nombre.find("segmentada") == std::string::npos && entry.path().extension() == ".png") {
+        if (nombre.rfind("pieza_", 0) == 0 &&
+            nombre.find("segmentada") == std::string::npos &&
+            entry.path().extension() == ".png") {
             imagenes.push_back(entry.path());
         }
     }
@@ -519,7 +521,7 @@ cv::Mat interfaz_robot::ProcesarImagen() {
     cv::Mat ultimaProcesada;
 
     for (const auto& rutaImagen : imagenes) {
-        std::cout << "Procesando: " << rutaImagen << std::endl;
+        std::cout << "\nProcesando: " << rutaImagen << std::endl;
         cv::Mat img = cv::imread(rutaImagen.string());
         if (img.empty()) {
             std::cerr << "No se pudo cargar " << rutaImagen << "\n";
@@ -533,182 +535,105 @@ cv::Mat interfaz_robot::ProcesarImagen() {
             continue;
         }
 
-        // === 2. Convertir a escala de grises ===
+        // === 2. Escala de grises y suavizado ===
         cv::Mat gris;
         cv::cvtColor(procesada, gris, cv::COLOR_BGR2GRAY);
+        cv::GaussianBlur(gris, gris, cv::Size(5, 5), 0);
+        cv::medianBlur(gris, gris, 5);
 
-        // === 3. Filtro de suavizado ===
-        cv::Mat suavizada;
-        cv::GaussianBlur(gris, suavizada, cv::Size(5, 5), 0);
-        cv::medianBlur(suavizada, suavizada, 5);
-
-        // === 4. Umbral adaptativo ===
+        // === 3. Umbral adaptativo ===
         cv::Mat binaria;
         cv::adaptiveThreshold(
-            suavizada, binaria, 255,
+            gris, binaria, 255,
             cv::ADAPTIVE_THRESH_GAUSSIAN_C,
             cv::THRESH_BINARY_INV, 21, 3
         );
 
-        // === 5. Morfología para limpiar ruido ===
-        cv::Mat kernelCierre = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7));
-        cv::morphologyEx(binaria, binaria, cv::MORPH_CLOSE, kernelCierre, cv::Point(-1, -1), 1);
-        cv::Mat kernelApertura = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3));
-        cv::morphologyEx(binaria, binaria, cv::MORPH_OPEN, kernelApertura, cv::Point(-1, -1), 1);
+        // === 4. Morfología (limpieza) ===
+        cv::morphologyEx(binaria, binaria, cv::MORPH_CLOSE,
+            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7)));
+        cv::morphologyEx(binaria, binaria, cv::MORPH_OPEN,
+            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(3, 3)));
+        cv::dilate(binaria, binaria,
+            cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7)));
 
-        // === 6. Detección de contornos ===
+        // === 5. Contornos ===
         std::vector<std::vector<cv::Point>> contornos;
         cv::findContours(binaria.clone(), contornos, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-        // === 7. Filtrar contornos por área y bordes ===
-        cv::Mat plano = cv::Mat::zeros(binaria.size(), CV_8UC1);
-        double areaMinima = procesada.cols * procesada.rows * 0.001;
+        cv::Mat salidaBinaria = cv::Mat::zeros(binaria.size(), CV_8UC1);
+        const double areaMinima = 20000.0;
+
+        std::vector<cv::Rect> bboxesValidas;
+        std::vector<double> areasValidas;
         std::vector<std::vector<cv::Point>> contornosValidos;
-        std::vector<cv::Rect> bboxes;
 
         for (const auto& c : contornos) {
             double area = cv::contourArea(c);
-            if (area < areaMinima) continue;
-            cv::Rect bbox = cv::boundingRect(c);
-            if (bbox.x <= 1 || bbox.y <= 1 || bbox.x + bbox.width >= procesada.cols - 1 || bbox.y + bbox.height >= procesada.rows - 1)
-                continue;
-            contornosValidos.push_back(c);
-            bboxes.push_back(bbox);
-        }
-
-        // Parámetros de fusión (ajustables)
-        const double distanciaMax = 25.0; // px máximo para considerar fusión
-        const double maxForegroundFrac = 0.30; // fracción máxima de foreground en la línea de conexión
-        const int samplesAlongLine = 20; // cantidad de muestras a tomar a lo largo de la línea
-
-        // Helper: calcula la distancia mínima entre 2 contornos y los puntos más cercanos (pA, pB)
-        auto contourMinDistAndPoints = [](const std::vector<cv::Point>& A, const std::vector<cv::Point>& B, cv::Point& pA_out, cv::Point& pB_out) -> double {
-            double minD = std::numeric_limits<double>::max();
-            for (const cv::Point& pa : A) {
-                for (const cv::Point& pb : B) {
-                    double d = cv::norm(pa - pb);
-                    if (d < minD) {
-                        minD = d;
-                        pA_out = pa;
-                        pB_out = pb;
-                    }
-                }
-            }
-            return minD;
-            };
-
-        // === 8. Mejor unión de contornos: criterios múltiples y verificación por línea ===
-        cv::Mat planoUnion = cv::Mat::zeros(binaria.size(), CV_8UC1);
-        cv::drawContours(planoUnion, contornosValidos, -1, 255, cv::FILLED);
-        std::vector<int> merge_partner(contornosValidos.size(), -1);
-
-        for (size_t i = 0; i < contornosValidos.size(); ++i) {
-            for (size_t j = i + 1; j < contornosValidos.size(); ++j) {
-                cv::Rect bi = bboxes[i];
-                cv::Rect bj = bboxes[j];
-                cv::Rect unionBB = bi | bj;
-                double diagMax = std::sqrt(std::max(bi.width * bi.width + bi.height * bi.height, bj.width * bj.width + bj.height * bj.height));
-
-                cv::Point2d ci(bi.x + bi.width / 2.0, bi.y + bi.height / 2.0);
-                cv::Point2d cj(bj.x + bj.width / 2.0, bj.y + bj.height / 2.0);
-                double centroDist = cv::norm(ci - cj);
-                if (centroDist > (diagMax * 1.5 + distanciaMax * 2.0)) {
-                    continue;
-                }
-
-                cv::Point pA, pB;
-                double minD = contourMinDistAndPoints(contornosValidos[i], contornosValidos[j], pA, pB);
-                if (minD > distanciaMax) continue;
-
-                int fgCount = 0;
-                int totalSamples = std::max(2, samplesAlongLine);
-                for (int s = 0; s <= totalSamples; ++s) {
-                    double t = static_cast<double>(s) / totalSamples;
-                    int x = static_cast<int>(std::round(pA.x + t * (pB.x - pA.x)));
-                    int y = static_cast<int>(std::round(pA.y + t * (pB.y - pA.y)));
-                    x = std::clamp(x, 0, binaria.cols - 1);
-                    y = std::clamp(y, 0, binaria.rows - 1);
-                    if (binaria.at<uchar>(y, x) > 0) fgCount++;
-                }
-
-                double fgFrac = static_cast<double>(fgCount) / (totalSamples + 1);
-                bool acceptMerge = false;
-                if (fgFrac <= maxForegroundFrac) {
-                    acceptMerge = true;
-                }
-                else {
-                    if (minD < std::max(3.0, diagMax * 0.08)) {
-                        acceptMerge = true;
-                    }
-                }
-
-                if (acceptMerge) {
-                    if (merge_partner[i] == -1 && merge_partner[j] == -1) {
-                        int idx = static_cast<int>(i);
-                        merge_partner[i] = idx;
-                        merge_partner[j] = idx;
-                    }
-                    else if (merge_partner[i] != -1 && merge_partner[j] == -1) {
-                        merge_partner[j] = merge_partner[i];
-                    }
-                    else if (merge_partner[j] != -1 && merge_partner[i] == -1) {
-                        merge_partner[i] = merge_partner[j];
-                    }
-                    else {
-                        int a = merge_partner[i];
-                        int b = merge_partner[j];
-                        if (a != b) {
-                            for (size_t k = 0; k < merge_partner.size(); ++k)
-                                if (merge_partner[k] == b)
-                                    merge_partner[k] = a;
-                        }
-                    }
-                    cv::line(planoUnion, pA, pB, 255, static_cast<int>(std::max(3.0, diagMax * 0.02)));
-                }
+            if (area >= areaMinima) {
+                cv::drawContours(salidaBinaria, std::vector<std::vector<cv::Point>>{c}, -1, 255, cv::FILLED);
+                bboxesValidas.push_back(cv::boundingRect(c));
+                areasValidas.push_back(area);
+                contornosValidos.push_back(c);
             }
         }
 
-        int nextCluster = static_cast<int>(contornosValidos.size());
-        for (size_t i = 0; i < contornosValidos.size(); ++i) {
-            if (merge_partner[i] == -1) {
-                merge_partner[i] = static_cast<int>(i);
-            }
+        std::cout << "Objetos detectados: " << bboxesValidas.size() << std::endl;
+
+        // === 6. Imagen final color ===
+        cv::Mat salidaFinal;
+        cv::cvtColor(salidaBinaria, salidaFinal, cv::COLOR_GRAY2BGR);
+
+        for (size_t i = 0; i < bboxesValidas.size(); ++i) {
+
+            // --- 6.1 Suavizado del contorno ---
+            std::vector<cv::Point> contornoSuave;
+            cv::approxPolyDP(contornosValidos[i], contornoSuave, 2.0, true);
+
+            // Contorno rojo
+            cv::drawContours(salidaFinal, std::vector<std::vector<cv::Point>>{contornoSuave}, -1, cv::Scalar(0, 0, 255), 2);
+
+            // Bounding box azul
+            cv::rectangle(salidaFinal, bboxesValidas[i], cv::Scalar(255, 0, 0), 2);
+
+            // --- 6.2 Centroide ---
+            cv::Moments m = cv::moments(contornosValidos[i]);
+            int cx = static_cast<int>(m.m10 / m.m00);
+            int cy = static_cast<int>(m.m01 / m.m00);
+            cv::circle(salidaFinal, cv::Point(cx, cy), 5, cv::Scalar(0, 255, 255), -1);
+
+            // Texto área + centroide
+            std::string texto = "A=" + std::to_string(static_cast<int>(areasValidas[i]));
+            cv::putText(salidaFinal, texto,
+                cv::Point(bboxesValidas[i].x, bboxesValidas[i].y - 5),
+                cv::FONT_HERSHEY_SIMPLEX, 0.6,
+                cv::Scalar(0, 255, 255), 2);
+
+            std::cout << "Objeto " << i + 1
+                << " -> Area=" << static_cast<int>(areasValidas[i])
+                << "  BBox(" << bboxesValidas[i].x << ", " << bboxesValidas[i].y
+                << ", " << bboxesValidas[i].width << "x" << bboxesValidas[i].height << ")"
+                << "  Centroide(" << cx << "," << cy << ")"
+                << std::endl;
         }
 
-        std::map<int, std::vector<int>> clusters;
-        for (size_t i = 0; i < merge_partner.size(); ++i) {
-            clusters[merge_partner[i]].push_back(static_cast<int>(i));
-        }
+        // === 7. Guardar imagen final ===
+        fs::path rutaSalida = rutaImagen.parent_path() /
+            (rutaImagen.stem().string() + "_segmentada.png");
+        cv::imwrite(rutaSalida.string(), salidaFinal);
 
-        cv::Mat planoClusters = cv::Mat::zeros(binaria.size(), CV_8UC1);
-        for (auto& kv : clusters) {
-            for (int idx : kv.second) {
-                cv::drawContours(planoClusters, contornosValidos, idx, 255, cv::FILLED);
-            }
-        }
-
-        cv::Mat kernelDilate = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(7, 7));
-        cv::dilate(planoClusters, planoClusters, kernelDilate);
-        cv::Mat kernelClose = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(9, 9));
-        cv::morphologyEx(planoClusters, planoClusters, cv::MORPH_CLOSE, kernelClose);
-
-        // === 9. Dibujar contornos finales sobre imagen procesada ===
-        std::vector<std::vector<cv::Point>> contornosFinales;
-        cv::findContours(planoClusters.clone(), contornosFinales, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-        cv::Mat salidaColor;
-        cv::cvtColor(planoClusters, salidaColor, cv::COLOR_GRAY2BGR);
-        cv::drawContours(salidaColor, contornosFinales, -1, cv::Scalar(0, 0, 255), 2);
-
-        // === 10. Guardar resultado ===
-        fs::path rutaColor = rutaImagen.parent_path() / (rutaImagen.stem().string() + "_segmentada.png");
-        cv::imwrite(rutaColor.string(), salidaColor);
-        std::cout << "Guardada la imagen segmentada: " << rutaColor << std::endl;
-
-        ultimaProcesada = salidaColor.clone();
+        ultimaProcesada = salidaFinal.clone();
     }
 
     return ultimaProcesada;
 }
+
+
+
+
+
+
+
 
 
 
