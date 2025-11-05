@@ -5,5 +5,6 @@
 #include <string>
 
 cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal);
+cv::Mat Segmentacion(const cv::Mat& procesada);
 
 #endif
