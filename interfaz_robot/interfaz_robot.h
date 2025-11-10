@@ -20,6 +20,10 @@ public:
     ~interfaz_robot();
     static void escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M);
     static cv::Mat leerMatriz(const std::string& nombreArchivo);
+    static cv::Point3d pixelToWorld3D(const cv::Point2d& uv,
+        const cv::Mat& K,
+        const cv::Mat& RTpanelCam,
+        const cv::Mat& RTcamRobot);
 
 private slots:
     void HabilitarBotones(bool habilitar);

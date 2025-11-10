@@ -78,7 +78,6 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnGuardar->setEnabled(habilitar);
     ui.btnMover1 -> setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
-	ui.btnCalibrar->setEnabled(habilitar);
 }
 
 void interfaz_robot::startStopCapture()
@@ -174,13 +173,13 @@ void interfaz_robot::CalibrarPanel()
     std::string imgFile = "calib_panel.png";
 
     // Nombre del archivo donde guardar la matriz RT
-    std::string outFile = "RT_panel.txt";
+    std::string outFile = "RT_panel_camara.txt";
 
     bool ok = calibratePanel(imgFile, K, D, boardSize, m_squareSize, outFile);
 
     if (ok)
     {
-        QMessageBox::information(this, QString("Calibración panel"), QString("Matriz RT guardada en RT_panel.txt"));
+        QMessageBox::information(this, QString("Calibración panel"), QString("Matriz RT guardada en RT_panel_camara.txt"));
     }
     else
     {
@@ -387,7 +386,6 @@ void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::
     std::ofstream archivo(nombreArchivo);
     if (!archivo.is_open()) { std::cerr << "No se pudo abrir " << nombreArchivo << "\n"; return; }
 
-    archivo << M.rows << " " << M.cols << "\n";
     for (int i = 0; i < M.rows; ++i)
     {
         for (int j = 0; j < M.cols; ++j)
@@ -399,14 +397,36 @@ void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::
 cv::Mat interfaz_robot::leerMatriz(const std::string& nombreArchivo)
 {
     std::ifstream archivo(nombreArchivo);
-    if (!archivo.is_open()) { std::cerr << "No se pudo abrir " << nombreArchivo << "\n"; return cv::Mat(); }
+    if (!archivo.is_open()) {
+        std::cerr << "No se pudo abrir " << nombreArchivo << "\n";
+        return cv::Mat();
+    }
 
-    int filas, columnas;
-    archivo >> filas >> columnas;
+    std::vector<std::vector<double>> valores;
+    std::string linea;
+
+    // Leer cada línea del archivo
+    while (std::getline(archivo, linea)) {
+        if (linea.empty()) continue; // saltar líneas vacías
+        std::stringstream ss(linea);
+        double val;
+        std::vector<double> fila;
+        while (ss >> val)
+            fila.push_back(val);
+        valores.push_back(fila);
+    }
+
+    if (valores.empty()) return cv::Mat();
+
+    int filas = static_cast<int>(valores.size());
+    int columnas = static_cast<int>(valores[0].size());
+
+    // Crear la matriz final
     cv::Mat M(filas, columnas, CV_64F);
     for (int i = 0; i < filas; ++i)
         for (int j = 0; j < columnas; ++j)
-            archivo >> M.at<double>(i, j);
+            M.at<double>(i, j) = valores[i][j];
+
     return M;
 }
 
@@ -544,6 +564,60 @@ cv::Mat interfaz_robot::ProcesarImagen() {
 
     return ultimaProcesada;
 }
+
+
+
+
+cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya tiene que ser sin distorsión
+    const cv::Mat& K,             
+    const cv::Mat& RTpanelCam,   
+    const cv::Mat& RTcamRobot)
+{
+    // Extraer fx, fy, cx, cy
+    double fx = K.at<double>(0, 0);
+    double fy = K.at<double>(1, 1);
+    double cx = K.at<double>(0, 2);
+    double cy = K.at<double>(1, 2);
+
+    // Coordenadas normalizadas de la cámara (recta de visión)
+    double x = (uv.x - cx) / fx;
+    double y = (uv.y - cy) / fy;
+    cv::Mat Pcam = (cv::Mat_<double>(4, 1) << x, y, 1.0, 1.0);
+
+    // Plano definido por RTpanel-camara
+    // P0 y P1 en coordenadas de cámara
+    cv::Mat P0c = (cv::Mat_<double>(4, 1) << 0, 0, 0, 1);  // origen del plano
+    cv::Mat P1c = (cv::Mat_<double>(4, 1) << 0, 0, 1, 1);  // punto a 1 unidad en z
+
+    // Transformar puntos al sistema de la cámara
+    P0c = RTpanelCam * P0c;
+    P1c = RTpanelCam * P1c;
+
+    // Vector normal del plano
+    cv::Mat Vn = P1c - P0c;
+    double A = Vn.at<double>(0, 0);
+    double B = Vn.at<double>(1, 0);
+    double C = Vn.at<double>(2, 0);
+    double D = -(A * P0c.at<double>(0, 0) + B * P0c.at<double>(1, 0) + C * P0c.at<double>(2, 0));
+
+    // Intersección de la recta con el plano: X = t * (x,y,1)
+    double t = -(D) / (A * x + B * y + C * 1.0);
+    double Ix = t * x;
+    double Iy = t * y;
+    double Iz = t * 1.0;
+
+    // Transformar al sistema del robot
+    cv::Mat Ptx = (cv::Mat_<double>(4, 1) << Ix, Iy, Iz, 1);
+    cv::Mat Probot = RTcamRobot * Ptx;
+
+    double Xr = Probot.at<double>(0, 0);
+    double Yr = Probot.at<double>(1, 0);
+    double Zr = Probot.at<double>(2, 0);
+
+    return cv::Point3d(Xr, Yr, Zr);
+    
+}
+
 
 
 

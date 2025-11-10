@@ -82,28 +82,21 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     // Guardar parámetros
     interfaz_robot robot;
     robot.escribirMatriz("K.txt", K);
-
-
     robot.escribirMatriz("Kc.txt", D);
-    cv::FileStorage fs("camera_calib.txt", cv::FileStorage::WRITE);
-    fs << "K" << K;
-    fs << "D" << D;
-    fs.release();
-    std::cout << "Guardado en camera_calib.txt\n";
 
-    // Mostrar corrección de una imagen
-    if (!filenames.empty())
-    {
-        cv::Mat img = cv::imread(filenames[0]);
-        if (!img.empty())
-        {
-            cv::Mat und;
-            cv::undistort(img, und, K, D);
-            //cv::imshow("Original", img);
-            //cv::imshow("Undistorted", und);
-            cv::waitKey(0);
-        }
-    }
+    //// Mostrar corrección de una imagen
+    //if (!filenames.empty())
+    //{
+    //    cv::Mat img = cv::imread(filenames[0]);
+    //    if (!img.empty())
+    //    {
+    //        cv::Mat und;
+    //        cv::undistort(img, und, K, D);
+    //        //cv::imshow("Original", img);
+    //        //cv::imshow("Undistorted", und);
+    //        cv::waitKey(0);
+    //    }
+    //}
 }
 
 // CALIBRACIÓN DE PANEL
@@ -150,12 +143,11 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
     R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
     tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
 
-    // Guardar RT en fichero
-    cv::FileStorage fs(outFile, cv::FileStorage::WRITE);
-    fs << "RT" << RT;
-    fs.release();
+    // Guardar en fichero
+    interfaz_robot robot;
+    robot.escribirMatriz("RT_panel_camara.txt", RT);
 
-    std::cout << "Calibración del panel completada. RT =\n" << RT << std::endl;
+    std::cout << "Calibración del panel completada. RT_panel_camara =\n" << RT << std::endl;
 
     cv::Mat vis = img.clone();
     cv::drawChessboardCorners(vis, boardSize, corners, true);
@@ -257,11 +249,10 @@ bool calibrateCameraRobot(int numImages, const cv::Size& boardSize, float square
     R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
     tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
 
-    // Guardar RT
-    cv::FileStorage fs(outFile, cv::FileStorage::WRITE);
-    fs << "RT" << RT;
-    fs.release();
+    // Guardar parámetros
+    interfaz_robot robot;
+    robot.escribirMatriz("RT_camara_robot.txt", RT);
 
-    std::cout << "Calibración cámara-robot completada. RT =\n" << RT << std::endl;
+    std::cout << "Calibración cámara-robot completada. RT_camara_robot =\n" << RT << std::endl;
     return true;
 }

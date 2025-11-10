@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include "interfaz_robot.h"
 
 using namespace cv;
 using namespace std;
@@ -36,12 +37,12 @@ cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal) {
     return imagenTransformada;
 }
 
-static inline double circularityFromContour(const std::vector<cv::Point>& c) {
-    double area = std::max(1.0, cv::contourArea(c));
-    double peri = cv::arcLength(c, true);
-    if (peri <= 1e-6) return 0.0;
-    return 4.0 * CV_PI * area / (peri * peri); // 1.0 para círculo perfecto
-}
+//static inline double circularityFromContour(const std::vector<cv::Point>& c) {
+//    double area = std::max(1.0, cv::contourArea(c));
+//    double peri = cv::arcLength(c, true);
+//    if (peri <= 1e-6) return 0.0;
+//    return 4.0 * CV_PI * area / (peri * peri); // 1.0 para círculo perfecto
+//}
 
 cv::Mat Segmentacion(const cv::Mat& procesada) {
     cv::Mat hsv, canalV, canalS, maskMetal, morf, salida;
@@ -128,7 +129,58 @@ cv::Mat Segmentacion(const cv::Mat& procesada) {
     cv::Mat maskFinal = cv::Mat::zeros(morf.size(), CV_8UC1);
     cv::drawContours(maskFinal, contornos, (int)idxMayor, cv::Scalar(255), cv::FILLED);
 
-    return maskFinal;
+    // Convertir la máscara binaria a BGR para poder dibujar en color
+    cv::Mat maskColor;
+    cv::cvtColor(maskFinal, maskColor, cv::COLOR_GRAY2BGR);
+
+    // 12. Calcular y dibujar centroide + ángulo
+    cv::Moments M = cv::moments(contornos[idxMayor]);
+    if (M.m00 != 0) {
+        int cx = static_cast<int>(M.m10 / M.m00);
+        int cy = static_cast<int>(M.m01 / M.m00);
+        std::cout << "Centroide: (" << cx << ", " << cy << ")" << std::endl;
+
+        // Convertir el centroide a coordenadas 3D en el sistema del robot
+        cv::Point2d centroide_px(cx, cy);
+		// hay que quitarle la distorsión a cx,cy antes de esto
+        cv::Mat cameraMatrix = interfaz_robot::leerMatriz("K.txt");
+        cv::Mat RTpanelCam = interfaz_robot::leerMatriz("RT_panel_camara.txt");
+        cv::Mat RTcamRobot = interfaz_robot::leerMatriz("RT_camara_robot.txt");
+        cv::Point3d P_robot = interfaz_robot::pixelToWorld3D(centroide_px, cameraMatrix, RTpanelCam, RTcamRobot); 
+
+        std::cout << "Coordenadas 3D en el sistema del robot: "
+            << P_robot << std::endl;
+
+        double angulo = 0.0;
+
+        // Si el contorno tiene suficientes puntos, calculamos la orientación
+        if (contornos[idxMayor].size() >= 5) {
+            cv::RotatedRect elipse = cv::fitEllipse(contornos[idxMayor]);
+            angulo = elipse.angle; // Ángulo en grados
+            std::cout << "Ángulo: " << angulo << "°" << std::endl;
+
+            // Dibujar eje principal (línea que indica orientación)
+            double longitudEje = 100.0;
+            double rad = angulo * CV_PI / 180.0;
+            cv::Point2f p1(cx, cy);
+            cv::Point2f p2(cx + longitudEje * cos(rad), cy + longitudEje * sin(rad));
+            cv::line(maskColor, p1, p2, cv::Scalar(0, 255, 0), 2); // verde
+        }
+
+        // Dibujar el centroide (blanco)
+        cv::circle(maskColor, cv::Point(cx, cy), 6, cv::Scalar(0, 0, 255), -1);
+
+        // Escribir texto (en rojo)
+        std::string texto = "Ang:" + std::to_string(static_cast<int>(angulo)) +
+            "  (" + std::to_string(cx) + "," + std::to_string(cy) + ")";
+        cv::putText(maskColor, texto, cv::Point(cx + 10, cy - 10),
+            cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2); // rojo
+    }
+
+    // Devolver la versión en color
+    return maskColor;
+
+
 }
 
 
