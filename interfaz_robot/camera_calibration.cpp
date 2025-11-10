@@ -13,7 +13,7 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
 {
     // Ajustar estos parámetros según nuestro patrón
     cv::Size boardSize(9, 6);     // Número de esquinas internas (ancho x alto)
-    float squareSize = 10.40f;     // Tamaño real de cada cuadrado en mm (o la unidad que sea)
+    float squareSize = 14.6f;     // Tamaño real de cada cuadrado en mm 
 
     std::vector<std::vector<cv::Point2f>> imagePoints;
     std::vector<std::vector<cv::Point3f>> objectPoints;

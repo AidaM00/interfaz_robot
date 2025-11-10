@@ -22,13 +22,7 @@
 #include <filesystem>
 
 
-namespace fs = std::filesystem;
 
-double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
-int contador = 1; // Contador global para los archivos (calib cámara-robot)
-// Parámetros del panel
-cv::Size boardSize(9, 6);     // Esquinas internas
-float squareSize = 10.4f;     // mm
 
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
@@ -156,11 +150,10 @@ void interfaz_robot::CalibrarCamara()
 {
     // Lista de archivos de calibración
     std::vector<std::string> archivos = {
-    "calib_camara_01.png", "calib_camara_02.png", "calib_camara_03.png", "calib_camara_04.png", "calib_camara_05.png",
-    "calib_camara_06.png", "calib_camara_07.png", "calib_camara_08.png", "calib_camara_09.png", "calib_camara_10.png",
-    "calib_camara_11.png", "calib_camara_12.png", "calib_camara_13.png", "calib_camara_14.png", "calib_camara_15.png",
-    "calib_camara_16.png", "calib_camara_17.png", "calib_camara_18.png", "calib_camara_19.png", "calib_camara_20.png",
-    "calib_camara_21.png", "calib_camara_22.png", "calib_camara_23.png", "calib_camara_24.png"
+    "calibr_camara_01.png", "calibr_camara_02.png", "calibr_camara_03.png", "calibr_camara_04.png", "calibr_camara_05.png",
+    "calibr_camara_06.png", "calibr_camara_07.png", "calibr_camara_08.png", "calibr_camara_09.png", "calibr_camara_10.png",
+    "calibr_camara_11.png", "calibr_camara_12.png", "calibr_camara_13.png", "calibr_camara_14.png", "calibr_camara_15.png",
+    "calibr_camara_16.png", "calibr_camara_17.png", "calibr_camara_18.png", "calibr_camara_19.png", "calibr_camara_20.png"
     };
 
     calibrateCameraFromFiles(archivos);  // Llamada a la función
@@ -183,7 +176,7 @@ void interfaz_robot::CalibrarPanel()
     // Nombre del archivo donde guardar la matriz RT
     std::string outFile = "RT_panel.txt";
 
-    bool ok = calibratePanel(imgFile, K, D, boardSize, squareSize, outFile);
+    bool ok = calibratePanel(imgFile, K, D, boardSize, m_squareSize, outFile);
 
     if (ok)
     {
@@ -483,7 +476,7 @@ void interfaz_robot::CalibrarCamaraRobot()
     string outFile = "RT_camara_robot.txt";
 
     // Ejecutar calibración
-    bool ok = calibrateCameraRobot(numImages, boardSize, squareSize, K, D, outFile);
+    bool ok = calibrateCameraRobot(numImages, boardSize, m_squareSize, K, D, outFile);
 
     if (ok)
         qDebug() << "Calibracion completa. RT camara-robot guardada";

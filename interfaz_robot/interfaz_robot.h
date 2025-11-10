@@ -9,6 +9,7 @@
 #include "procesado.h"
 
 namespace Ui { class interfaz_robot; }
+namespace fs = std::filesystem;
 
 class interfaz_robot : public QMainWindow
 {
@@ -44,6 +45,13 @@ private:
     cv::VideoCapture cap;      // Cámara
     cv::Mat ultimoFrame;
     Ccom_robot* m_robot;
+    
+
+    double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
+    int contador = 1; // Contador global para los archivos (calib cámara-robot)
+    // Parámetros del panel
+    cv::Size boardSize=cv::Size(9, 6);     // Esquinas internas
+    float m_squareSize = 10.4f;     // mm
 
 };
 
