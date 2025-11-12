@@ -140,32 +140,28 @@ cv::Mat Segmentacion(const cv::Mat& procesada) {
         int cy = static_cast<int>(M.m01 / M.m00);
         std::cout << "Centroide: (" << cx << ", " << cy << ")" << std::endl;
 
-        // Convertir el centroide a coordenadas 3D en el sistema del robot
-        cv::Point2d centroide_px(cx, cy);
-		// hay que quitarle la distorsión a cx,cy antes de esto
-        cv::Mat cameraMatrix = interfaz_robot::leerMatriz("K.txt");
-        cv::Mat RTpanelCam = interfaz_robot::leerMatriz("RT_panel_camara.txt");
-        cv::Mat RTcamRobot = interfaz_robot::leerMatriz("RT_camara_robot.txt");
-        cv::Point3d P_robot = interfaz_robot::pixelToWorld3D(centroide_px, cameraMatrix, RTpanelCam, RTcamRobot); 
+        // Calcular ángulo con arcotangente respecto al origen (0,0)
+        double dx = static_cast<double>(cx);
+        double dy = static_cast<double>(cy);
 
-        std::cout << "Coordenadas 3D en el sistema del robot: "
-            << P_robot << std::endl;
+        // atan2 devuelve el ángulo en radianes entre el eje X y el vector (dx, dy)
+        double anguloRad = atan2(dy, dx);
+        double angulo = anguloRad * 180.0 / CV_PI;
 
-        double angulo = 0.0;
+        // Normalizar ángulo a [0, 360)
+        if (angulo < 0) angulo += 360.0;
 
-        // Si el contorno tiene suficientes puntos, calculamos la orientación
-        if (contornos[idxMayor].size() >= 5) {
-            cv::RotatedRect elipse = cv::fitEllipse(contornos[idxMayor]);
-            angulo = elipse.angle; // Ángulo en grados
-            std::cout << "Ángulo: " << angulo << "°" << std::endl;
+        std::cout << "Ángulo (atan2): " << angulo << "°" << std::endl;
 
-            // Dibujar eje principal (línea que indica orientación)
-            double longitudEje = 100.0;
-            double rad = angulo * CV_PI / 180.0;
-            cv::Point2f p1(cx, cy);
-            cv::Point2f p2(cx + longitudEje * cos(rad), cy + longitudEje * sin(rad));
-            cv::line(maskColor, p1, p2, cv::Scalar(0, 255, 0), 2); // verde
-        }
+        // Dibujar una línea que indique la dirección desde el origen
+        cv::Point2f origen(0, 0);
+        cv::Point2f centro(cx, cy);
+        cv::line(maskColor, origen, centro, cv::Scalar(0, 255, 0), 2); // verde
+
+        // Dibujar el eje angular desde el centroide
+        double longitudEje = 100.0;
+        cv::Point2f p2(cx + longitudEje * cos(anguloRad), cy + longitudEje * sin(anguloRad));
+        cv::line(maskColor, cv::Point(cx, cy), p2, cv::Scalar(255, 0, 0), 2); // azul
 
         // Dibujar el centroide (blanco)
         cv::circle(maskColor, cv::Point(cx, cy), 6, cv::Scalar(0, 0, 255), -1);
@@ -175,6 +171,35 @@ cv::Mat Segmentacion(const cv::Mat& procesada) {
             "  (" + std::to_string(cx) + "," + std::to_string(cy) + ")";
         cv::putText(maskColor, texto, cv::Point(cx + 10, cy - 10),
             cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0, 0, 255), 2); // rojo
+
+
+        // Una vez hay centroide ya en 3D -> cinemática inversa
+        // 1. Convertir a Point2d
+        cv::Point2d centroide_px(cx, cy);
+
+        // 2. Quitar distorsión (con coeficientes de distorsión)
+        cv::Mat cameraMatrix = interfaz_robot::leerMatriz("K.txt");
+        cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
+        std::vector<cv::Point2d> srcPoints{ centroide_px };
+        std::vector<cv::Point2d> undistortedPoints;
+
+        // Función de OpenCV para quitar distorsión
+        cv::undistortPoints(srcPoints, undistortedPoints, cameraMatrix, distCoeffs, cv::noArray(), cameraMatrix);
+
+        // Ahora undistortedPoints[0] es el centroide sin distorsión
+        cv::Point2d uv_sin_distorsion = undistortedPoints[0];
+
+        // 3. Leer matrices de transformación
+        cv::Mat RTpanelCam = interfaz_robot::leerMatriz("RT_panel_camara.txt");
+        cv::Mat RTcamRobot = interfaz_robot::leerMatriz("RT_camara_robot.txt");
+
+        // 4. Convertir a coordenadas 3D en el sistema del robot
+        cv::Point3d P_robot = interfaz_robot::pixelToWorld3D(uv_sin_distorsion, cameraMatrix, RTpanelCam, RTcamRobot);
+
+
+
+        //// 5. Llamar a cinematica inversa
+        //interfaz_robot::CinematicaInversa(P_robot.x, P_robot.y, P_robot.z, anguloGlobal, r, z);
     }
 
     // Devolver la versión en color
@@ -182,26 +207,6 @@ cv::Mat Segmentacion(const cv::Mat& procesada) {
 
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

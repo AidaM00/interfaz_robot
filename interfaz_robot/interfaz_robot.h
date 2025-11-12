@@ -41,6 +41,9 @@ private slots:
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
     cv::Mat ProcesarImagen();
+    void CinematicaInversa(double cx, double cy, double cz, double angulo);
+    void MoverRobotActual();
+    void AbrirCerrarPinza(int accion);
 
 private:
     Ui::interfaz_robotClass ui;
@@ -50,8 +53,16 @@ private:
     cv::Mat ultimoFrame;
     Ccom_robot* m_robot;
     
+    // Constantes del robot (mm)
+    const double a1 = 76;
+    const double a2 = 125;
+    const double a3 = 125;
+    const double a4 = 60;
+    const double a5 = 132;
 
-    double q[6] = { 0,0,0,0,0,0 };   // Ángulos actuales del robot en grados
+    // Ángulos actuales (grados)
+    double q[6] = { 0, 0, 0, 0, 0, 0 };  // Ángulos actuales del robot en grados
+
     int contador = 1; // Contador global para los archivos (calib cámara-robot)
     // Parámetros del panel
     cv::Size boardSize=cv::Size(9, 6);     // Esquinas internas
