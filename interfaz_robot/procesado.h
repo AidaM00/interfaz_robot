@@ -6,6 +6,8 @@
 #include "interfaz_robot.h"
 
 cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal);
-cv::Mat Segmentacion(const cv::Mat& procesada);
+void LocalizarPieza(const cv::Mat& procesada, cv::Point2f& centro, cv::Point2f& ptoLejano);
+cv::Point3d Inversa(const cv::Point& punto_px);
+
 
 #endif

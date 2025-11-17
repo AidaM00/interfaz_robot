@@ -32,6 +32,7 @@ private slots:
     void GuardarImagen();
     void MoverEje();
     void MoverTodosLosEjes();
+	void MoverPosInterm();
     void VerificarRango(int valor);
     void iniciarComRobot();
     //void ActualizarPosicionRobot();
@@ -40,7 +41,7 @@ private slots:
 	void CalibrarPanel();
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
-    cv::Mat ProcesarImagen();
+    void ProcesarImagen();
     void CinematicaInversa(double cx, double cy, double cz, double angulo);
     void MoverRobotActual();
     void AbrirCerrarPinza(int accion);

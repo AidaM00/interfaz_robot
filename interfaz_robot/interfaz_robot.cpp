@@ -39,6 +39,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnPoses, SIGNAL(clicked()), this, SLOT(GuardarImagenYPose()));
     connect(ui.btnCalibrarCamaraRobot, SIGNAL(clicked()), this, SLOT(CalibrarCamaraRobot()));
     connect(ui.btnProcesar, SIGNAL(clicked()), this, SLOT(ProcesarImagen()));
+	connect(ui.btnPosInterm, SIGNAL(clicked()), this, SLOT(MoverPosInterm()));
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -255,6 +256,38 @@ void interfaz_robot::MoverTodosLosEjes()
 
     Directa();  // Calcula y muestra la rotación y posición resultante
 }
+
+void interfaz_robot::MoverPosInterm()
+{
+    if (!m_robot) {
+        QMessageBox::warning(this, "Error", "Robot no inicializado.");
+        return;
+    }
+
+    // Valores deseados para cada eje: 45, 0, 70, 70, 0, 0
+    q[0] = 45;
+    q[1] = 0;
+    q[2] = 70;
+    q[3] = 70;
+    q[4] = 0;
+    q[5] = 0;
+
+    // Construir comando tipo: #a45,0,70,70,0,0*
+    QString comando = "#a";
+    for (int i = 0; i < 6; ++i) {
+        comando += QString::number(q[i]);
+        if (i < 5) comando += ",";
+    }
+    comando += "*";
+
+    // Enviar comando al robot
+    m_robot->enviarComando(comando);
+    qDebug() << "Moviendo robot a posición intermedia: " << comando;
+
+    // Actualizar la interfaz con la posición
+    Directa();
+}
+
 
 void interfaz_robot::VerificarRango(int valor)
 {
@@ -507,104 +540,104 @@ void interfaz_robot::CalibrarCamaraRobot()
 
 
 
+void interfaz_robot::ProcesarImagen()
+{
+    namespace fs = std::filesystem;
+    fs::path rutaEjecutable = fs::current_path();
+    std::vector<fs::path> imagenes;
+
+    // Buscar imágenes "pieza_*.png"
+    for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
+        std::string nombre = entry.path().filename().string();
+        if (nombre.rfind("pieza_", 0) == 0 &&
+            nombre.find("segmentada") == std::string::npos &&
+            entry.path().extension() == ".png") {
+            imagenes.push_back(entry.path());
+        }
+    }
+
+    if (imagenes.empty()) {
+        std::cout << "No se encontraron imágenes que empiecen por 'pieza_'.\n";
+        return;
+    }
+
+    std::sort(imagenes.begin(), imagenes.end());
+
+    for (const auto& rutaImagen : imagenes) {
+        std::cout << "\nProcesando: " << rutaImagen << std::endl;
+        cv::Mat img = cv::imread(rutaImagen.string());
+        if (img.empty()) {
+            std::cerr << "No se pudo cargar " << rutaImagen << "\n";
+            continue;
+        }
+
+        // Recortar y reescalar
+        cv::Mat procesada = recortarYReescalar(img);
+        if (procesada.empty()) {
+            std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
+            continue;
+        }
+
+        // Localizar pieza y guardar imagen 
+        cv::Point2f centro(0,0);
+        cv::Point2f lejano(0,0);
+        LocalizarPieza(procesada, centro, lejano);
+        std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
+
+        cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr);
+        cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano, K, RTpc, RTcr);
+
+		float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
+			lejano_baseRobot.x - centro_baseRobot.x) * RAD2DEG;
+
+		CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+
+        // Mover agarrin
+    }
+}
+
+
 
 
 //cv::Mat interfaz_robot::ProcesarImagen() {
-//    namespace fs = std::filesystem;
-//    fs::path rutaEjecutable = fs::current_path();
-//    std::vector<fs::path> imagenes;
-//
-//    // Buscar imágenes "pieza_*.png" no segmentadas
-//    for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
-//        std::string nombre = entry.path().filename().string();
-//        if (nombre.rfind("pieza_", 0) == 0 &&
-//            nombre.find("segmentada") == std::string::npos &&
-//            entry.path().extension() == ".png") {
-//            imagenes.push_back(entry.path());
-//        }
-//    }
-//
-//    if (imagenes.empty()) {
-//        std::cout << "No se encontraron imágenes que empiecen por 'pieza_'.\n";
+//    if (!camara) {
 //        return cv::Mat();
 //    }
 //
-//    std::sort(imagenes.begin(), imagenes.end());
-//    cv::Mat ultimaProcesada;
+//    std::cout << "Procesamiento en tiempo real iniciado\n";
 //
-//    for (const auto& rutaImagen : imagenes) {
-//        std::cout << "\nProcesando: " << rutaImagen << std::endl;
-//        cv::Mat img = cv::imread(rutaImagen.string());
-//        if (img.empty()) {
-//            std::cerr << "No se pudo cargar " << rutaImagen << "\n";
+//    cv::Mat frame, procesada, salida;
+//
+//    while (true) {
+//        frame = camara->getImage();
+//        if (frame.empty()) {
+//            std::cerr << "Frame vacío recibido.\n";
 //            continue;
 //        }
 //
-//        // Recortar y reescalar
-//        cv::Mat procesada = recortarYReescalar(img);
+//        // Recortar y reescalar el frame actual
+//        procesada = recortarYReescalar(frame);
+//        cv::imshow("Procesada", procesada);
 //        if (procesada.empty()) {
-//            std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
+//            std::cerr << "Error al recortar y reescalar.\n";
 //            continue;
 //        }
 //
-//        // Segmentación
-//        cv::Mat salidaFinal = Segmentacion(procesada);
+//        // Procesar la imagen en tiempo real
+//        salida = Segmentacion(procesada);
 //
-//        // Guardar imagen final
-//        fs::path rutaSalida = rutaImagen.parent_path() /
-//            (rutaImagen.stem().string() + "_segmentada.png");
-//        cv::imwrite(rutaSalida.string(), salidaFinal);
+//        // Mostrar el resultado segmentado (con centroide y ángulo dibujados)
+//        cv::imshow("Vista segmentada", salida);
 //
-//        ultimaProcesada = salidaFinal.clone();
-//
-//        // Mover agarrin
-//
+//        // Pequeña espera para refrescar ventana (33 ms, 30 FPS)
+//        char c = static_cast<char>(cv::waitKey(33));
+//        if (c == 'q' || c == 27)
+//            break;
 //    }
 //
-//    return ultimaProcesada;
+//    cv::destroyAllWindows();
+//    return salida;
 //}
-
-
-
-cv::Mat interfaz_robot::ProcesarImagen() {
-    if (!camara) {
-        return cv::Mat();
-    }
-
-    std::cout << "Procesamiento en tiempo real iniciado\n";
-
-    cv::Mat frame, procesada, salida;
-
-    while (true) {
-        frame = camara->getImage();
-        if (frame.empty()) {
-            std::cerr << "Frame vacío recibido.\n";
-            continue;
-        }
-
-        // Recortar y reescalar el frame actual
-        procesada = recortarYReescalar(frame);
-        cv::imshow("Procesada", procesada);
-        if (procesada.empty()) {
-            std::cerr << "Error al recortar y reescalar.\n";
-            continue;
-        }
-
-        // Procesar la imagen en tiempo real
-        salida = Segmentacion(procesada);
-
-        // Mostrar el resultado segmentado (con centroide y ángulo dibujados)
-        cv::imshow("Vista segmentada", salida);
-
-        // Pequeña espera para refrescar ventana (33 ms, 30 FPS)
-        char c = static_cast<char>(cv::waitKey(33));
-        if (c == 'q' || c == 27)
-            break;
-    }
-
-    cv::destroyAllWindows();
-    return salida;
-}
 
 cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya tiene que ser sin distorsión
     const cv::Mat& K,             
