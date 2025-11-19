@@ -584,7 +584,10 @@ void interfaz_robot::ProcesarImagen()
         LocalizarPieza(procesada, centro, lejano);
         std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
 
-        cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr);
+        Mat K = leerMatriz("K.txt");
+        Mat RTpc = leerMatriz("RT_panel_camara.txt");
+        Mat RTcr = leerMatriz("RT_camara_robot.txt");
+        cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
         cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano, K, RTpc, RTcr);
 
 		float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
