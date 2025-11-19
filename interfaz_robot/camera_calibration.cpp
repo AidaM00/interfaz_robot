@@ -249,10 +249,22 @@ bool calibrateCameraRobot(int numImages, const cv::Size& boardSize, float square
     R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
     tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
 
-    // Guardar parámetros
+    // Guardar RT original
     interfaz_robot robot;
-    robot.escribirMatriz("RT_camara_robot.txt", RT);
+    robot.escribirMatriz("RT_robot_camara.txt", RT);
+    std::cout << "Calibración robot-camara completada. RT_robot_camara =\n" << RT << std::endl;
 
-    std::cout << "Calibración cámara-robot completada. RT_camara_robot =\n" << RT << std::endl;
+    // Invertir RT para obtener cámara -> robot
+    cv::Mat R_inv = R.t();             // Transpuesta de R
+    cv::Mat T_inv = -R_inv * tvec;     // Nueva traslación
+
+    cv::Mat RT_inv = cv::Mat::eye(4, 4, CV_64F);
+    R_inv.copyTo(RT_inv(cv::Range(0, 3), cv::Range(0, 3)));
+    T_inv.copyTo(RT_inv(cv::Range(0, 3), cv::Range(3, 4)));
+
+    // Guardar matriz invertida directamente
+    robot.escribirMatriz("RT_camara_robot.txt", RT_inv);
+    std::cout << "Calibración cámara-robot completada. RT_camara_robot =\n" << RT_inv << std::endl;
+
     return true;
 }

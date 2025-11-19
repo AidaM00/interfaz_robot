@@ -579,7 +579,7 @@ void interfaz_robot::ProcesarImagen()
         }
 
         // Localizar pieza y guardar imagen 
-        cv::Point2f centro(0,0);
+        cv::Point2f centro(0, 0);
         cv::Point2f lejano(0,0);
         LocalizarPieza(procesada, centro, lejano);
         std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
@@ -587,8 +587,18 @@ void interfaz_robot::ProcesarImagen()
         Mat K = leerMatriz("K.txt");
         Mat RTpc = leerMatriz("RT_panel_camara.txt");
         Mat RTcr = leerMatriz("RT_camara_robot.txt");
-        cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
-        cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano, K, RTpc, RTcr);
+        cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
+        // Quitar distorsión
+        std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
+        cv::undistortPoints(srcPoints1, undistortedPoints_centro, K, distCoeffs, cv::noArray(), K);
+        cv::Point2d centro_sin_distorsion = undistortedPoints_centro[0];
+
+        std::vector<cv::Point2d> srcPoints2{ lejano }, undistortedPoints_lejano;
+        cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
+        cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
+
+        cv::Point3d centro_baseRobot = pixelToWorld3D(centro_sin_distorsion, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
+        cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano_sin_distorsion, K, RTpc, RTcr);
 
 		float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
 			lejano_baseRobot.x - centro_baseRobot.x) * RAD2DEG;
