@@ -156,6 +156,8 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
 
     return true;
 }
+
+// CALIBRACIÓN CÁMARA-ROBOT
 cv::Mat RotX(double a) {
     cv::Mat R = cv::Mat::eye(4, 4, CV_64F);
     R.at<double>(1, 1) = cos(a);  R.at<double>(1, 2) = -sin(a);
@@ -199,7 +201,7 @@ cv::Mat fkBraccio(const double q_deg[6])
     const double L4 = 60;
     const double L5 = 132;
 
-    cv::Mat RT =
+    cv::Mat RT = //tool base
         RotZ(q5) * Trans(0, 0, L5) *
         RotY(q4) * Trans(0, 0, L4) *
         RotY(q3) * Trans(0, 0, L3) *
@@ -208,6 +210,7 @@ cv::Mat fkBraccio(const double q_deg[6])
 
     return RT;
 }
+
 bool calibrateCameraRobot(
     int numImages,
     const cv::Size& boardSize,
@@ -242,41 +245,52 @@ bool calibrateCameraRobot(
         // Detectar esquinas del tablero
         std::vector<cv::Point2f> corners;
         bool found = cv::findChessboardCorners(gray, boardSize, corners);
+        //std::cout << "Bool =\n" << found << std::endl;
         if (!found) continue;
 
         cv::cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1),
             cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.1));
 
-        // solvePnP -> R,t (board -> cam)
-        cv::Mat rvec, tvec;
-        cv::solvePnP(objectPoints[0], corners, K, D, rvec, tvec);
-        cv::Mat R;
-        cv::Rodrigues(rvec, R);
+        // solvePnP devuelve panel camara
+        cv::Mat rvec_target2cam, tvec_target2cam; 
+        cv::solvePnP(objectPoints[0], corners, K, D, rvec_target2cam, tvec_target2cam);
 
-        R_target2cam.push_back(R);
-        t_target2cam.push_back(tvec);
+        cv::Mat R_target2cam_mat;
+        cv::Rodrigues(rvec_target2cam, R_target2cam_mat);
 
-        // Leer pose del robot (Base→Gripper)
+        //// Invertir para obtener target to cam
+        //cv::Mat R_target2cam_inv = R_target2cam_mat.t();
+        //cv::Mat t_target2cam_inv = -R_target2cam_inv * tvec_target2cam;
+
+        R_target2cam.push_back(R_target2cam_mat);
+        t_target2cam.push_back(tvec_target2cam);
+
+        // Leer pose del robot (Base a Gripper)
         double q[6];
         std::ifstream f(poseFile.str());
         if (!f.is_open()) continue;
         for (int k = 0; k < 6; k++) f >> q[k];
         f.close();
 
-        cv::Mat T = fkBraccio(q);   // ^baseT_gripper
-        cv::Mat Rb = T(cv::Range(0, 3), cv::Range(0, 3)).clone();
-        cv::Mat tb = T(cv::Range(0, 3), cv::Range(3, 4)).clone();
+        cv::Mat RT = fkBraccio(q);   //es gripper base
+        cv::Mat RT_inv;
+        cv::invert(RT, RT_inv);
 
-        R_base2gripper.push_back(Rb);
+        cv::Mat Rb = RT_inv(cv::Range(0, 3), cv::Range(0, 3)).clone();
+        cv::Mat tb = RT_inv(cv::Range(0, 3), cv::Range(3, 4)).clone();
+
+        R_base2gripper.push_back(Rb); 
         t_base2gripper.push_back(tb);
     }
 
     // Calibración hand-eye (eye-to-hand)
     cv::Mat R_cam2base, t_cam2base;
-    cv::calibrateHandEye(
+    // primero pasarle el siguiente RT base gripper y luego el anterior RT target camara
+    // devuelve cam gripper
+    cv::calibrateHandEye( 
         R_base2gripper, t_base2gripper,
         R_target2cam, t_target2cam,
-        R_cam2base, t_cam2base,
+        R_cam2base, t_cam2base, 
         cv::CALIB_HAND_EYE_TSAI);
 
     // Construir matriz homogénea 4x4 (Cam → Base)
