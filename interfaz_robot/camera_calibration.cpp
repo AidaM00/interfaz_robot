@@ -1,4 +1,4 @@
-#include <opencv2/opencv.hpp>
+Ôªø#include <opencv2/opencv.hpp>
 #include "camera_calibration.h"
 #include <iostream>
 #include <vector>
@@ -8,12 +8,12 @@
 #include <iomanip>
 
 
-// CALIBRACI”N DE C¡MARA
+// CALIBRACI√ìN DE C√ÅMARA
 void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
 {
-    // Ajustar estos par·metros seg˙n nuestro patrÛn
-    cv::Size boardSize(9, 6);     // N˙mero de esquinas internas (ancho x alto)
-    float squareSize = 10.4f;     // TamaÒo real de cada cuadrado en mm 
+    // Ajustar estos par√°metros seg√∫n nuestro patr√≥n
+    cv::Size boardSize(9, 6);     // N√∫mero de esquinas internas (ancho x alto)
+    float squareSize = 10.4f;     // Tama√±o real de cada cuadrado en mm 
 
     std::vector<std::vector<cv::Point2f>> imagePoints;
     std::vector<std::vector<cv::Point3f>> objectPoints;
@@ -57,34 +57,34 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
         }
         else
         {
-            std::cerr << "No se detectÛ patrÛn en " << file << std::endl;
+            std::cerr << "No se detect√≥ patr√≥n en " << file << std::endl;
         }
     }
 
-    // ValidaciÛn mÌnima
+    // Validaci√≥n m√≠nima
     if (imagePoints.size() < 10)
     {
-        std::cerr << "No hay suficientes im·genes v·lidas para la calibraciÛn.\n";
+        std::cerr << "No hay suficientes im√°genes v√°lidas para la calibraci√≥n.\n";
         return;
     }
 
-    // CalibraciÛn intrÌnseca
+    // Calibraci√≥n intr√≠nseca
     cv::Mat K, D;
     std::vector<cv::Mat> rvecs, tvecs;
 
     double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, K, D, rvecs, tvecs);
 
-    std::cout << "\nCalibraciÛn completada\n";
+    std::cout << "\nCalibraci√≥n completada\n";
     std::cout << "RMS error = " << rms << "\n\n";
     std::cout << "Matriz K =\n" << K << "\n\n";
-    std::cout << "DistorsiÛn D =\n" << D << "\n\n";
+    std::cout << "Distorsi√≥n D =\n" << D << "\n\n";
 
-    // Guardar par·metros
+    // Guardar par√°metros
     interfaz_robot robot;
     robot.escribirMatriz("K.txt", K);
     robot.escribirMatriz("Kc.txt", D);
 
-    //// Mostrar correcciÛn de una imagen
+    //// Mostrar correcci√≥n de una imagen
     //if (!filenames.empty())
     //{
     //    cv::Mat img = cv::imread(filenames[0]);
@@ -99,7 +99,7 @@ void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
     //}
 }
 
-// CALIBRACI”N DE PANEL
+// CALIBRACI√ìN DE PANEL
 bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat& D,
     const cv::Size& boardSize, float squareSize, const std::string& outFile)
 {
@@ -118,7 +118,7 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
 
     if (!found)
     {
-        std::cerr << "No se detectÛ el patrÛn en la imagen.\n";
+        std::cerr << "No se detect√≥ el patr√≥n en la imagen.\n";
         return false;
     }
 
@@ -138,7 +138,7 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
     cv::Mat R;
     cv::Rodrigues(rvec, R);
 
-    // Matriz homogÈnea 4x4 RT
+    // Matriz homog√©nea 4x4 RT
     cv::Mat RT = cv::Mat::eye(4, 4, CV_64F);
     R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
     tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
@@ -147,7 +147,7 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
     interfaz_robot robot;
     robot.escribirMatriz("RT_panel_camara.txt", RT);
 
-    std::cout << "CalibraciÛn del panel completada. RT_panel_camara =\n" << RT << std::endl;
+    std::cout << "Calibraci√≥n del panel completada. RT_panel_camara =\n" << RT << std::endl;
 
     cv::Mat vis = img.clone();
     cv::drawChessboardCorners(vis, boardSize, corners, true);
@@ -156,115 +156,149 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
 
     return true;
 }
-
-
-// Convertir pose q[6] a posiciÛn TCP en 3D
-cv::Point3f poseToTCP(const double q[6])
-{
-    double q1 = q[0] * M_PI / 180.0;
-    double q2 = q[1] * M_PI / 180.0;
-    double q3 = q[2] * M_PI / 180.0;
-    double q4 = q[3] * M_PI / 180.0;
-    double q5 = q[4] * M_PI / 180.0;
-
-    const double a1 = 76, a2 = 125, a3 = 125, a4 = 60, a5 = 132;
-    double ang3 = q2 + q3;
-    double ang4 = q2 + q3 + q4;
-
-    double px = cos(q1) * (a2 * sin(q2) + a3 * sin(ang3) + (a4 + a5) * sin(ang4));
-    double py = sin(q1) * (a2 * sin(q2) + a3 * sin(ang3) + (a4 + a5) * sin(ang4));
-    double pz = a1 + a2 * cos(q2) + a3 * cos(ang3) + (a4 + a5) * cos(ang4);
-
-    return cv::Point3f(px, py, pz);
+cv::Mat RotX(double a) {
+    cv::Mat R = cv::Mat::eye(4, 4, CV_64F);
+    R.at<double>(1, 1) = cos(a);  R.at<double>(1, 2) = -sin(a);
+    R.at<double>(2, 1) = sin(a);  R.at<double>(2, 2) = cos(a);
+    return R;
 }
 
-// FunciÛn para calibraciÛn c·mara-robot
-bool calibrateCameraRobot(int numImages, const cv::Size& boardSize, float squareSize,
-    const cv::Mat& K, const cv::Mat& D, const std::string& outFile)
+cv::Mat RotY(double a) {
+    cv::Mat R = cv::Mat::eye(4, 4, CV_64F);
+    R.at<double>(0, 0) = cos(a);  R.at<double>(0, 2) = sin(a);
+    R.at<double>(2, 0) = -sin(a); R.at<double>(2, 2) = cos(a);
+    return R;
+}
+
+cv::Mat RotZ(double a) {
+    cv::Mat R = cv::Mat::eye(4, 4, CV_64F);
+    R.at<double>(0, 0) = cos(a);  R.at<double>(0, 1) = -sin(a);
+    R.at<double>(1, 0) = sin(a);  R.at<double>(1, 1) = cos(a);
+    return R;
+}
+
+cv::Mat Trans(double x, double y, double z) {
+    cv::Mat T = cv::Mat::eye(4, 4, CV_64F);
+    T.at<double>(0, 3) = x;
+    T.at<double>(1, 3) = y;
+    T.at<double>(2, 3) = z;
+    return T;
+}
+
+cv::Mat fkBraccio(const double q_deg[6])
 {
-    std::vector<cv::Point3f> objectPoints; // puntos 3D robot
-    std::vector<cv::Point2f> imagePoints;  // puntos 2D en la imagen
+    double q1 = q_deg[0] * M_PI / 180.0;
+    double q2 = q_deg[1] * M_PI / 180.0;
+    double q3 = q_deg[2] * M_PI / 180.0;
+    double q4 = q_deg[3] * M_PI / 180.0;
+    double q5 = q_deg[4] * M_PI / 180.0;
+
+    const double L1 = 76;
+    const double L2 = 125;
+    const double L3 = 125;
+    const double L4 = 60;
+    const double L5 = 132;
+
+    cv::Mat RT =
+        RotZ(q5) * Trans(0, 0, L5) *
+        RotY(q4) * Trans(0, 0, L4) *
+        RotY(q3) * Trans(0, 0, L3) *
+        RotY(q2) * Trans(0, 0, L2) *
+        RotZ(q1) * Trans(0, 0, L1);
+
+    return RT;
+}
+bool calibrateCameraRobot(
+    int numImages,
+    const cv::Size& boardSize,
+    float squareSize,
+    const cv::Mat& K,
+    const cv::Mat& D,
+    const std::string& outFile)
+{
+    // Puntos 3D del tablero
+    std::vector<std::vector<cv::Point3f>> objectPoints(1);
+    for (int r = 0; r < boardSize.height; r++)
+        for (int c = 0; c < boardSize.width; c++)
+            objectPoints[0].push_back(cv::Point3f(c * squareSize, r * squareSize, 0));
+
+    // Vectores de rotaci√≥n/traslaci√≥n para calibrateHandEye
+    std::vector<cv::Mat> R_base2gripper, t_base2gripper;
+    std::vector<cv::Mat> R_target2cam, t_target2cam;
 
     for (int i = 1; i <= numImages; ++i)
     {
-        // Archivos
-        std::ostringstream nombreImg, nombrePose;
-        nombreImg << "imagen_" << std::setw(2) << std::setfill('0') << i << ".png";
-        nombrePose << "pose_" << std::setw(2) << std::setfill('0') << i << ".txt";
+        std::ostringstream imgFile, poseFile;
+        imgFile << "imagen_" << std::setw(2) << std::setfill('0') << i << ".png";
+        poseFile << "pose_" << std::setw(2) << std::setfill('0') << i << ".txt";
 
-        cv::Mat img = cv::imread(nombreImg.str());
-        if (img.empty()) {
-            std::cerr << "No se pudo leer " << nombreImg.str() << std::endl;
-            continue;
-        }
+        // Cargar imagen
+        cv::Mat img = cv::imread(imgFile.str());
+        if (img.empty()) continue;
 
-        double q[6];
-        std::ifstream f(nombrePose.str());
-        if (!f.is_open()) {
-            std::cerr << "No se pudo leer " << nombrePose.str() << std::endl;
-            continue;
-        }
-        for (int j = 0; j < 6; ++j) f >> q[j];
-        f.close();
-
-        // Detectar esquinas del tablero
-        std::vector<cv::Point2f> corners;
         cv::Mat gray;
         cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
+        // Detectar esquinas del tablero
+        std::vector<cv::Point2f> corners;
         bool found = cv::findChessboardCorners(gray, boardSize, corners);
-        if (!found) {
-            std::cerr << "No se detectÛ patrÛn en " << nombreImg.str() << std::endl;
-            continue;
-        }
+        if (!found) continue;
 
         cv::cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1),
             cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.1));
 
-        // Generar puntos 3D basados en TCP del robot
-        cv::Point3f tcp = poseToTCP(q);
-        for (int y = 0; y < boardSize.height; ++y)
-            for (int x = 0; x < boardSize.width; ++x)
-                objectPoints.push_back(cv::Point3f(tcp.x + x * squareSize,
-                    tcp.y + y * squareSize,
-                    tcp.z));
+        // solvePnP -> R,t (board -> cam)
+        cv::Mat rvec, tvec;
+        cv::solvePnP(objectPoints[0], corners, K, D, rvec, tvec);
+        cv::Mat R;
+        cv::Rodrigues(rvec, R);
 
-        // AÒadir puntos 2D
-        imagePoints.insert(imagePoints.end(), corners.begin(), corners.end());
+        R_target2cam.push_back(R);
+        t_target2cam.push_back(tvec);
+
+        // Leer pose del robot (Base‚ÜíGripper)
+        double q[6];
+        std::ifstream f(poseFile.str());
+        if (!f.is_open()) continue;
+        for (int k = 0; k < 6; k++) f >> q[k];
+        f.close();
+
+        cv::Mat T = fkBraccio(q);   // ^baseT_gripper
+        cv::Mat Rb = T(cv::Range(0, 3), cv::Range(0, 3)).clone();
+        cv::Mat tb = T(cv::Range(0, 3), cv::Range(3, 4)).clone();
+
+        R_base2gripper.push_back(Rb);
+        t_base2gripper.push_back(tb);
     }
 
-    if (objectPoints.empty() || imagePoints.empty()) {
-        std::cerr << "No se detectaron suficientes puntos." << std::endl;
-        return false;
-    }
+    // Calibraci√≥n hand-eye (eye-to-hand)
+    cv::Mat R_cam2base, t_cam2base;
+    cv::calibrateHandEye(
+        R_base2gripper, t_base2gripper,
+        R_target2cam, t_target2cam,
+        R_cam2base, t_cam2base,
+        cv::CALIB_HAND_EYE_TSAI);
 
-    // Resolver PnP
-    cv::Mat rvec, tvec;
-    bool ok = cv::solvePnP(objectPoints, imagePoints, K, D, rvec, tvec);
-
-    // Convertir a matriz homogÈnea 4x4
-    cv::Mat R;
-    cv::Rodrigues(rvec, R);
+    // Construir matriz homog√©nea 4x4 (Cam ‚Üí Base)
     cv::Mat RT = cv::Mat::eye(4, 4, CV_64F);
-    R.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
-    tvec.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
+    R_cam2base.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
+    t_cam2base.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
 
-    // Guardar RT original
+    // Guardar
     interfaz_robot robot;
-    robot.escribirMatriz("RT_robot_camara.txt", RT);
-    std::cout << "CalibraciÛn robot-camara completada. RT_robot_camara =\n" << RT << std::endl;
+    robot.escribirMatriz("RT_camara_base.txt", RT);
 
-    // Invertir RT para obtener c·mara -> robot
-    cv::Mat R_inv = R.t();             // Transpuesta de R
-    cv::Mat T_inv = -R_inv * tvec;     // Nueva traslaciÛn
-
-    cv::Mat RT_inv = cv::Mat::eye(4, 4, CV_64F);
-    R_inv.copyTo(RT_inv(cv::Range(0, 3), cv::Range(0, 3)));
-    T_inv.copyTo(RT_inv(cv::Range(0, 3), cv::Range(3, 4)));
-
-    // Guardar matriz invertida directamente
-    robot.escribirMatriz("RT_camara_robot.txt", RT_inv);
-    std::cout << "CalibraciÛn c·mara-robot completada. RT_camara_robot =\n" << RT_inv << std::endl;
+    std::cout << "RT_camara_base =\n" << RT << std::endl;
 
     return true;
 }
+
+
+
+
+
+
+
+
+
+
