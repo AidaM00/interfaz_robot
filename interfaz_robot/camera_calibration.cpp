@@ -149,6 +149,12 @@ bool calibratePanel(const std::string& imgFile, const cv::Mat& K, const cv::Mat&
 
     std::cout << "Calibración del panel completada. RT_panel_camara =\n" << RT << std::endl;
 
+    // Guardar para comprobaciones
+    FileStorage fs("RT_panel_camara.yml", FileStorage::WRITE);
+    fs << "rvec" << rvec;
+    fs << "tvec" << tvec;
+    fs.release();
+
     cv::Mat vis = img.clone();
     cv::drawChessboardCorners(vis, boardSize, corners, true);
     cv::imshow("Panel detectado", vis);
@@ -301,6 +307,20 @@ bool calibrateCameraRobot(
     // Guardar
     interfaz_robot robot;
     robot.escribirMatriz("RT_camara_base.txt", RT);
+
+    // Guardar para comprobaciones
+    FileStorage fs("RT_camara_base.yml", FileStorage::WRITE);
+    fs << "R_cam2base" << R_cam2base;
+    fs << "t_cam2base" << t_cam2base;
+    fs.release();
+
+    // Comprobaciones para debug
+	FileStorage fs_check("debug_handeye.yml", FileStorage::WRITE);
+	fs_check << "R_base2gripper" << R_base2gripper;
+	fs_check << "t_base2gripper" << t_base2gripper;
+	fs_check << "R_target2cam" << R_target2cam;
+	fs_check << "t_target2cam" << t_target2cam;
+	fs_check.release();
 
     std::cout << "RT_camara_base =\n" << RT << std::endl;
 
