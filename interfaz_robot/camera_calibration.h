@@ -15,5 +15,9 @@ bool calibratePanel(const std::string& imgFile,
     const std::string& outFile);
 bool calibrateCameraRobot(int numImages, const cv::Size& boardSize, float squareSize,
     const cv::Mat& K, const cv::Mat& D, const std::string& outFile);
+cv::Mat fkBraccio(const double q_deg[6]);
+cv::Mat RotY(double a); 
+cv::Mat RotZ(double a);
+cv::Mat Trans(double x, double y, double z);
 
 #endif // CAMERA_CALIBRATION_H

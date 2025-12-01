@@ -207,14 +207,14 @@ cv::Mat fkBraccio(const double q_deg[6])
     const double L4 = 60;
     const double L5 = 132;
 
-    cv::Mat RT = //tool base
-        RotZ(q5) * Trans(0, 0, L5) *
-        RotY(q4) * Trans(0, 0, L4) *
-        RotY(q3) * Trans(0, 0, L3) *
+    cv::Mat RT_gripperBase =   
+        RotZ(q1) * Trans(0, 0, L1) *
         RotY(q2) * Trans(0, 0, L2) *
-        RotZ(q1) * Trans(0, 0, L1);
+        RotY(q3) * Trans(0, 0, L3) *
+        RotY(q4) * Trans(0, 0, L4) *
+        RotZ(q5) * Trans(0, 0, L5);
 
-    return RT;
+    return (RT_gripperBase.inv());
 }
 
 bool calibrateCameraRobot(
@@ -278,12 +278,10 @@ bool calibrateCameraRobot(
         for (int k = 0; k < 6; k++) f >> q[k];
         f.close();
 
-        cv::Mat RT = fkBraccio(q);   //es gripper base
-        cv::Mat RT_inv;
-        cv::invert(RT, RT_inv);
+        cv::Mat RTbg = fkBraccio(q);   //es gripper bas
 
-        cv::Mat Rb = RT_inv(cv::Range(0, 3), cv::Range(0, 3)).clone();
-        cv::Mat tb = RT_inv(cv::Range(0, 3), cv::Range(3, 4)).clone();
+        cv::Mat Rb = RTbg(cv::Range(0, 3), cv::Range(0, 3)).clone();
+        cv::Mat tb = RTbg(cv::Range(0, 3), cv::Range(3, 4)).clone();
 
         R_base2gripper.push_back(Rb); 
         t_base2gripper.push_back(tb);

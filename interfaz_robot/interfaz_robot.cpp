@@ -24,6 +24,24 @@
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
 {
+    //////////////////////////////////////////////////////////////
+    double a[6];
+    a[0] = 90;
+    a[1] = 0;
+    a[2] = 90;
+    a[3] = 90;
+    a[4] = 0;
+    a[5] = 0;
+    const double L1 = 76;
+    const double L2 = 125;
+    const double L3 = 125;
+    const double L4 = 60;
+    const double L5 = 132;
+
+    cv:Mat m = fkBraccio(a);
+    escribirMatriz("basura.txt",m);
+
+    //////////////////////////////////////////////////////////////
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
     ui.setupUi(this);
     camara = new CVideoAcquisition(0);
