@@ -540,7 +540,7 @@ void interfaz_robot::CalibrarCamaraRobot()
     }
 
     // Archivo de salida
-    string outFile = "RT_camara_robot.txt";
+    string outFile = "RT_camara_base.txt";
 
     // Ejecutar calibración
     bool ok = calibrateCameraRobot(numImages, boardSize, m_squareSize, K, D, outFile);
@@ -604,7 +604,7 @@ void interfaz_robot::ProcesarImagen()
 
         Mat K = leerMatriz("K.txt");
         Mat RTpc = leerMatriz("RT_panel_camara.txt");
-        Mat RTcr = leerMatriz("RT_camara_robot.txt");
+        Mat RTcr = leerMatriz("RT_camara_base.txt");
         cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
         // Quitar distorsión
         std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
@@ -709,12 +709,16 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya 
     double Iz = t * 1.0;
 
     // Transformar al sistema del robot
-    cv::Mat Ptx = (cv::Mat_<double>(4, 1) << Ix, Iy, Iz, 1);
-    cv::Mat Probot = RTcamRobot * Ptx;
+    cv::Matx44d RT(RTcamRobot); // 4x4
+    cv::Vec4d P(Ix, Iy, Iz, 1.0);
 
-    double Xr = Probot.at<double>(0, 0);
-    double Yr = Probot.at<double>(1, 0);
-    double Zr = Probot.at<double>(2, 0);
+    cv::Vec4d P_robot = RT * P;
+
+    // Extraer
+    double Xr = P_robot[0];
+    double Yr = P_robot[1];
+    double Zr = P_robot[2];
+
 
     return cv::Point3d(Xr, Yr, Zr);
     
