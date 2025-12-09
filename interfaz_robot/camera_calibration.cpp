@@ -278,7 +278,7 @@ bool calibrateCameraRobot(
         for (int k = 0; k < 6; k++) f >> q[k];
         f.close();
 
-        cv::Mat RTbg = fkBraccio(q);   //es gripper bas
+        cv::Mat RTbg = fkBraccio(q);  
 
         cv::Mat Rb = RTbg(cv::Range(0, 3), cv::Range(0, 3)).clone();
         cv::Mat tb = RTbg(cv::Range(0, 3), cv::Range(3, 4)).clone();
@@ -305,22 +305,8 @@ bool calibrateCameraRobot(
     // Guardar
     interfaz_robot robot;
     robot.escribirMatriz("RT_camara_base.txt", RT);
-
-    // Guardar para comprobaciones
-    FileStorage fs("RT_camara_base.yml", FileStorage::WRITE);
-    fs << "R_cam2base" << R_cam2base;
-    fs << "t_cam2base" << t_cam2base;
-    fs.release();
-
-    // Comprobaciones para debug
-	FileStorage fs_check("debug_handeye.yml", FileStorage::WRITE);
-	fs_check << "R_base2gripper" << R_base2gripper;
-	fs_check << "t_base2gripper" << t_base2gripper;
-	fs_check << "R_target2cam" << R_target2cam;
-	fs_check << "t_target2cam" << t_target2cam;
-	fs_check.release();
-
     std::cout << "RT_camara_base =\n" << RT << std::endl;
+    std::cout << "RT_base_camara =\n" << RT.inv() << std::endl;
 
     return true;
 }
