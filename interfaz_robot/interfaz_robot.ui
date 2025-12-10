@@ -10,6 +10,12 @@
     <height>687</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
   <property name="windowTitle">
    <string>interfaz_robot</string>
   </property>
@@ -27,25 +33,69 @@
     <item>
      <widget class="QGroupBox" name="groupBox_camara">
       <property name="styleSheet">
-       <string notr="true">QGroupBox {
-    background-color: #F0F0F0; /* gris clarito */
+       <string notr="true">#groupBox_camara {
+    background-color: #f7f7f7;
     border: 2px solid #d0d0d0;
     border-radius: 8px;
     margin-top: 20px;
-    font-weight: bold;
+	font-weight: bold;
 }
 
-QGroupBox::title {
-    subcontrol-origin: margin;
+#groupBox_camara::title {
+    color: #0a4fa3;
+	subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 10px;
-    color: #0078d7;
     font-size: 12pt;
+}
+
+#btnInicio {
+    background-color: #e5e9f0;
+    border: 1px solid #bcc5d1;
+    border-radius: 6px;
+    padding: 8px 14px;
+    font-size: 14px;
+}
+#btnInicio:hover {
+    background-color: #dce3ec;
+}
+#btnInicio:pressed {
+    background-color: #c8d0da;
+}
+
+#lblInicio {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    min-height: 250px;
+}
+
+#btnGuardar {
+    background-color: #e6e6e6;
+    border: 1px solid #bfbfbf;
+    border-radius: 6px;
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+#btnGuardar:hover {
+    background-color: #dadada;
+}
+
+#btnGuardar:pressed {
+    background-color: #c8c8c8;
+}
+
+#groupBox_camara QSpinBox {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 4px;
+    background-color: #ffffff;
 }
 </string>
       </property>
       <property name="title">
-       <string>CÁMARA</string>
+       <string notr="true">CÁMARA</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
@@ -118,7 +168,7 @@ QPushButton:disabled {
          <property name="minimumSize">
           <size>
            <width>400</width>
-           <height>0</height>
+           <height>252</height>
           </size>
          </property>
          <property name="baseSize">
@@ -141,7 +191,7 @@ QPushButton:disabled {
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>TextLabel</string>
+          <string>video</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -397,10 +447,10 @@ QPushButton:disabled {
       <widget class="QGroupBox" name="groupBox_todos">
        <property name="geometry">
         <rect>
-         <x>10</x>
-         <y>180</y>
-         <width>371</width>
-         <height>441</height>
+         <x>40</x>
+         <y>210</y>
+         <width>331</width>
+         <height>341</height>
         </rect>
        </property>
        <property name="styleSheet">
@@ -463,8 +513,8 @@ QPushButton:hover {
        <widget class="QPushButton" name="btnMoverTodos">
         <property name="geometry">
          <rect>
-          <x>190</x>
-          <y>150</y>
+          <x>140</x>
+          <y>180</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -505,8 +555,8 @@ QPushButton:disabled {
        <widget class="QSpinBox" name="spinEje1">
         <property name="geometry">
          <rect>
-          <x>90</x>
-          <y>80</y>
+          <x>250</x>
+          <y>30</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -522,7 +572,7 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>130</y>
+          <y>80</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -537,8 +587,8 @@ QPushButton:disabled {
        <widget class="QSpinBox" name="spinEje3">
         <property name="geometry">
          <rect>
-          <x>90</x>
-          <y>180</y>
+          <x>250</x>
+          <y>80</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -554,7 +604,7 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>90</x>
-          <y>230</y>
+          <y>130</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -569,8 +619,8 @@ QPushButton:disabled {
        <widget class="QSpinBox" name="spinEje5">
         <property name="geometry">
          <rect>
-          <x>90</x>
-          <y>280</y>
+          <x>250</x>
+          <y>130</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -604,8 +654,8 @@ QPushButton:disabled {
        <widget class="QLabel" name="label_eje1">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>80</y>
+          <x>180</x>
+          <y>30</y>
           <width>65</width>
           <height>31</height>
          </rect>
@@ -627,7 +677,7 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>130</y>
+          <y>80</y>
           <width>65</width>
           <height>31</height>
          </rect>
@@ -648,8 +698,8 @@ QPushButton:disabled {
        <widget class="QLabel" name="label_eje3">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>180</y>
+          <x>180</x>
+          <y>80</y>
           <width>65</width>
           <height>31</height>
          </rect>
@@ -671,7 +721,7 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>230</y>
+          <y>130</y>
           <width>65</width>
           <height>31</height>
          </rect>
@@ -692,8 +742,8 @@ QPushButton:disabled {
        <widget class="QLabel" name="label_eje5">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>280</y>
+          <x>180</x>
+          <y>130</y>
           <width>65</width>
           <height>31</height>
          </rect>
@@ -714,9 +764,9 @@ QPushButton:disabled {
        <widget class="QLabel" name="lblRotacion">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>335</y>
-          <width>351</width>
+          <x>30</x>
+          <y>230</y>
+          <width>291</width>
           <height>41</height>
          </rect>
         </property>
@@ -727,9 +777,9 @@ QPushButton:disabled {
        <widget class="QLabel" name="lblPosicionActual">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>390</y>
-          <width>351</width>
+          <x>30</x>
+          <y>280</y>
+          <width>291</width>
           <height>41</height>
          </rect>
         </property>

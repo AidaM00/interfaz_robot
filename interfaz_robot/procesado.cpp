@@ -11,15 +11,15 @@ using namespace std;
 cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal) {
     // Puntos de la imagen original que queremos mapear
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(480, 173),   // superior izquierda
-        cv::Point2f(1330, 183),   // superior derecha
-        cv::Point2f(310, 926),   // inferior izquierda
-        cv::Point2f(1490, 922)   // inferior derecha
+        cv::Point2f(480, 173),    // Superior izquierda
+        cv::Point2f(1330, 183),   // Superior derecha
+        cv::Point2f(310, 926),    // Inferior izquierda
+        cv::Point2f(1490, 922)    // Inferior derecha
     };
 
     // Puntos destino (esquinas de la nueva imagen)
-    int anchoNuevo = 1920;  // ancho de la nueva imagen
-    int altoNuevo = 1080;   // alto de la nueva imagen
+    int anchoNuevo = 1920;  // Ancho de la nueva imagen
+    int altoNuevo = 1080;   // Alto de la nueva imagen
     std::vector<cv::Point2f> dstPoints = {
         cv::Point2f(0, 0),
         cv::Point2f(anchoNuevo, 0),
@@ -154,11 +154,11 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
         // Si hay puntos, generar un contorno cerrado usando convexHull
         std::vector<cv::Point> contornoDentro;
         if (!puntosDentro.empty()) {
-            cv::convexHull(puntosDentro, contornoDentro);  // asegura un contorno cerrado
+            cv::convexHull(puntosDentro, contornoDentro);  // Asegura un contorno cerrado
         }
         std::vector<cv::Point2f> contornoDenso;
         float deltax, deltay, m;
-        for (int i = 1; i < contornoDentro.size(); i++)  // recorrer el contorno
+        for (int i = 1; i < contornoDentro.size(); i++)  // Recorrer el contorno
         {
             deltay = contornoDentro.at(i).y - contornoDentro.at(i - 1).y;
             deltax = contornoDentro.at(i).x - contornoDentro.at(i - 1).x;
