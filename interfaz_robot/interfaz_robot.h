@@ -45,6 +45,8 @@ private slots:
     void CinematicaInversa(double cx, double cy, double cz, double angulo);
     void MoverRobotActual();
     void AbrirCerrarPinza(int accion);
+    void Esperar(int ms);
+    void TrasladarPieza();
 
 private:
     Ui::interfaz_robotClass ui;

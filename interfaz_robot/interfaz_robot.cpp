@@ -20,6 +20,7 @@
 #include <filesystem>
 #include "procesado.h"
 #include <filesystem>
+#include <QEventLoop>
 
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
@@ -58,6 +59,8 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnCalibrarCamaraRobot, SIGNAL(clicked()), this, SLOT(CalibrarCamaraRobot()));
     connect(ui.btnProcesar, SIGNAL(clicked()), this, SLOT(ProcesarImagen()));
 	connect(ui.btnPosInterm, SIGNAL(clicked()), this, SLOT(MoverPosInterm()));
+    connect(ui.btnTrasladarPieza, SIGNAL(clicked()), this, SLOT(TrasladarPieza()));
+
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje1, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -102,13 +105,13 @@ void interfaz_robot::startStopCapture()
     capturando = !capturando;
 
     if (capturando) {
-        camara->startStopCapture(true);  // iniciar cámara
-        timerVideo->start(33);           // actualizar cada 33 ms (unos 30 FPS)
+        camara->startStopCapture(true);  // Iniciar cámara
+        timerVideo->start(33);           // Actualizar cada 33 ms (unos 30 FPS)
 
         ui.btnInicio->setText("Detener");
     }
     else {
-        timerVideo->stop();              // detener refresco
+        timerVideo->stop();              // Detener refresco
         camara->startStopCapture(false);
         ui.btnInicio->setText("Iniciar");
     }
@@ -454,7 +457,7 @@ cv::Mat interfaz_robot::leerMatriz(const std::string& nombreArchivo)
 
     // Leer cada línea del archivo
     while (std::getline(archivo, linea)) {
-        if (linea.empty()) continue; // saltar líneas vacías
+        if (linea.empty()) continue; // Saltar líneas vacías
         std::stringstream ss(linea);
         double val;
         std::vector<double> fila;
@@ -670,7 +673,7 @@ void interfaz_robot::ProcesarImagen()
 //    return salida;
 //}
 
-cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya tiene que ser sin distorsión
+cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya tiene que ser sin distorsión
     const cv::Mat& K,             
     const cv::Mat& RTpanelCam,   
     const cv::Mat& RTcamRobot)
@@ -688,8 +691,8 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya 
 
     // Plano definido por RTpanel-camara
     // P0 y P1 en coordenadas de cámara
-    cv::Mat P0c = (cv::Mat_<double>(4, 1) << 0, 0, 0, 1);  // origen del plano
-    cv::Mat P1c = (cv::Mat_<double>(4, 1) << 0, 0, 1, 1);  // punto a 1 unidad en z
+    cv::Mat P0c = (cv::Mat_<double>(4, 1) << 0, 0, 0, 1);  // Origen del plano
+    cv::Mat P1c = (cv::Mat_<double>(4, 1) << 0, 0, 1, 1);  // Punto a 1 unidad en z
 
     // Transformar puntos al sistema de la cámara
     P0c = RTpanelCam * P0c;
@@ -711,7 +714,6 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya 
     // Transformar al sistema del robot
     cv::Matx44d RT(RTcamRobot); // 4x4
     cv::Vec4d P(Ix, Iy, Iz, 1.0);
-
     cv::Vec4d P_robot = RT * P;
 
     // Extraer
@@ -719,11 +721,8 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // esto uv ya 
     double Yr = P_robot[1];
     double Zr = P_robot[2];
 
-
     return cv::Point3d(Xr, Yr, Zr);
-    
 }
-
 
 
 void interfaz_robot::MoverRobotActual()
@@ -745,7 +744,7 @@ void interfaz_robot::MoverRobotActual()
     Directa(); // Actualizar posición en la interfaz
 }
 
-void interfaz_robot::AbrirCerrarPinza(int accion) //0 = abrir, 1 = cerrar
+void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
 {
     if (!m_robot) {
         QMessageBox::warning(this, "Error", "Robot no inicializado.");
@@ -824,3 +823,52 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
     AbrirCerrarPinza(1); // Cerrar pinza
 
 }
+
+
+void interfaz_robot::Esperar(int ms)
+{
+    QEventLoop loop;
+    QTimer::singleShot(ms, &loop, SLOT(quit()));
+    loop.exec();
+}
+
+
+void interfaz_robot::TrasladarPieza()
+{
+    // Suponemos que q[] tiene la posición actual de los motores
+    double q_original[6];
+    for (int i = 0; i < 6; i++)
+        q_original[i] = q[i];
+
+    qDebug() << "Inicio de traslado de pieza";
+
+    // 1: Subir brazo: q2 - 20°
+    q[2] = q_original[2] - 20.0;
+    qDebug() << "1. Subiendo brazo: q2 =" << q[2];
+    MoverRobotActual();
+	Esperar(1500); // Esperar 1.5 segundos por si acaso
+
+    // 2: Girar base a 90° (q0 = 90°)
+    q[0] = 90.0;
+    qDebug() << "2. Girando base a 90 grados: q0 =" << q[0];
+    MoverRobotActual();
+    Esperar(1500); // Esperar 1.5 segundos por si acaso
+
+    // 3: Bajar brazo nuevamente: q2 + 20°
+    q[2] = q_original[2];
+    qDebug() << "3. Bajando brazo a valor original: q2 =" << q[2];
+    MoverRobotActual();
+    Esperar(1500); // Esperar 1.5 segundos por si acaso
+
+    // 4: Abrir pinza
+    qDebug() << "4. Abriendo pinza";
+    AbrirCerrarPinza(0);   // 0 = abrir pinza 
+    Esperar(1500); // Esperar 1.5 segundos por si acaso
+
+    // 5: Volver a posición intermedia
+    qDebug() << "5. Volviendo a posicion intermedia";
+    MoverPosInterm();
+
+    qDebug() << "Pieza trasladada";
+}
+

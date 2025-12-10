@@ -11,7 +11,7 @@
 // CALIBRACIÓN DE CÁMARA
 void calibrateCameraFromFiles(const std::vector<std::string>& filenames)
 {
-    // Ajustar estos parámetros según nuestro patrón
+    // Ajustar estos parámetros según el patrón
     cv::Size boardSize(9, 6);     // Número de esquinas internas (ancho x alto)
     float squareSize = 10.4f;     // Tamaño real de cada cuadrado en mm 
 
@@ -289,7 +289,7 @@ bool calibrateCameraRobot(
 
     // Calibración hand-eye (eye-to-hand)
     cv::Mat R_cam2base, t_cam2base;
-    // primero pasarle el siguiente RT base gripper y luego el anterior RT target camara
+    // primero pasarle el siguiente RT: base gripper y luego el anterior RT: target camara
     // devuelve cam gripper
     cv::calibrateHandEye( 
         R_base2gripper, t_base2gripper,
@@ -297,7 +297,7 @@ bool calibrateCameraRobot(
         R_cam2base, t_cam2base, 
         cv::CALIB_HAND_EYE_TSAI);
 
-    // Construir matriz homogénea 4x4 (Cam → Base)
+    // Construir matriz homogénea 4x4 (Cam a Base)
     cv::Mat RT = cv::Mat::eye(4, 4, CV_64F);
     R_cam2base.copyTo(RT(cv::Range(0, 3), cv::Range(0, 3)));
     t_cam2base.copyTo(RT(cv::Range(0, 3), cv::Range(3, 4)));
