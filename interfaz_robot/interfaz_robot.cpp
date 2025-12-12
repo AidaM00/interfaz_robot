@@ -233,7 +233,7 @@ void interfaz_robot::MoverEje()
         m_robot->mover(eje, grados);
         QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
-        //Directa();  // Calcula y muestra la rotación y posición resultante
+        //Directa();  
 		// Actualizar información de los motores en la interfaz
 		ActualizarInterfaz();
     }
