@@ -890,7 +890,7 @@ void interfaz_robot::Esperar(int ms)
 
 void interfaz_robot::TrasladarPieza()
 {
-    // Suponemos que q[] tiene la posición actual de los motores
+    //  q[] tiene la posición actual de los motores
     double q_original[6];
     for (int i = 0; i < 6; i++)
         q_original[i] = q[i];
@@ -902,7 +902,7 @@ void interfaz_robot::TrasladarPieza()
     MoverEje(2, q_original[2] - 20.0);
 	Esperar(1500); // Esperar 1.5 segundos por si acaso
 
-    // 2: Girar base a 90° (q0 = 90°)
+    // 2: Mover a posición de seguridad
     int angulos[6] = { 90,5 ,70 ,90 ,0, round(q_original[5]) };
     qDebug() << "2. Girando base a 90 grados: q0 =" << q[0];
 	MoverTodosLosEjes(angulos);
@@ -918,11 +918,11 @@ void interfaz_robot::TrasladarPieza()
     AbrirCerrarPinza(0);   // 0 = abrir pinza 
     Esperar(1500); // Esperar 1.5 segundos por si acaso
 
-    // 5: Volver a posición intermedia
-    qDebug() << "5. Volviendo a posicion intermedia";
+    // 5: Volver a posición de seguridad
+    qDebug() << "5. Volviendo a posicion de seguridad";
     MoverEje(2, 70);
 
-    qDebug() << "Pieza trasladada";
+    qDebug() << "Pieza depositada";
 
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
