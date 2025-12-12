@@ -36,7 +36,8 @@ private slots:
     void VerificarRango(int valor);
     void iniciarComRobot();
     //void ActualizarPosicionRobot();
-    void Directa();
+    //void Directa();
+    void ActualizarInterfaz();
     void CalibrarCamara();
 	void CalibrarPanel();
 	void GuardarImagenYPose();

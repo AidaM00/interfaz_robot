@@ -45,6 +45,15 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     //////////////////////////////////////////////////////////////
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
     ui.setupUi(this);
+
+    // Inicializar los valores
+    for (int i = 0; i < 6; i++) {
+        q[i] = 0;
+    }
+
+    // Mostrar los valores iniciales en la interfaz
+    ActualizarInterfaz();
+
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
     connect(ui.btnInicio, SIGNAL(clicked()), this, SLOT(startStopCapture()));
@@ -74,7 +83,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
 
     ui.lblInicio->setText("Vídeo no iniciado");
-    ui.lblPosicionActual->setText("Posición actual: desconocida");
+    //ui.lblPosicionActual->setText("Posición actual: desconocida");
 	HabilitarBotones(false);
  
 }
@@ -224,7 +233,9 @@ void interfaz_robot::MoverEje()
         m_robot->mover(eje, grados);
         QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
-        Directa();  // Calcula y muestra la rotación y posición resultante
+        //Directa();  // Calcula y muestra la rotación y posición resultante
+		// Actualizar información de los motores en la interfaz
+		ActualizarInterfaz();
     }
     else {
         QMessageBox::critical(this, "Error", "Robot no inicializado.");
@@ -275,7 +286,9 @@ void interfaz_robot::MoverTodosLosEjes()
     for (int i = 0; i < 6; i++)
         q[i] = angulos[i];
 
-    Directa();  // Calcula y muestra la rotación y posición resultante
+    // Actualizar información de los motores en la interfaz
+    ActualizarInterfaz();
+    //Directa();  // Calcula y muestra la rotación y posición resultante
 }
 
 void interfaz_robot::MoverPosInterm()
@@ -306,7 +319,9 @@ void interfaz_robot::MoverPosInterm()
     qDebug() << "Moviendo robot a posición intermedia: " << comando;
 
     // Actualizar la interfaz con la posición
-    Directa();
+    //Directa();
+    // Actualizar información de los motores en la interfaz
+    ActualizarInterfaz();
 }
 
 
@@ -370,64 +385,76 @@ static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
 
 
 
-void interfaz_robot::Directa() {
-    // Convertir ángulos a radianes
-    double q1 = q[0] * DEG2RAD;
-    double q2 = q[1] * DEG2RAD;
-    double q3 = q[2] * DEG2RAD;
-    double q4 = q[3] * DEG2RAD;
-    double q5 = q[4] * DEG2RAD;
+//void interfaz_robot::Directa() {
+//    // Convertir ángulos a radianes
+//    double q1 = q[0] * DEG2RAD;
+//    double q2 = q[1] * DEG2RAD;
+//    double q3 = q[2] * DEG2RAD;
+//    double q4 = q[3] * DEG2RAD;
+//    double q5 = q[4] * DEG2RAD;
+//
+//    // Ángulos acumulados
+//    double ang3 = q2 + q3;
+//    double ang4 = q2 + q3 + q4;
+//
+//    // Preparación de senos y cosenos
+//    double c1 = cos(q1), s1 = sin(q1);
+//    double c2 = cos(q2), s2 = sin(q2);
+//    double c5 = cos(q5), s5 = sin(q5);
+//    double sin_3 = sin(ang3), cos_3 = cos(ang3);
+//    double sin_4 = sin(ang4), cos_4 = cos(ang4);
+//
+//    // Matriz de rotación R
+//    double R11 = c1 * cos_4 * c5 - s1 * s5;
+//    double R12 = -c1 * cos_4 * s5 - s1 * c5;
+//    double R13 = c1 * sin_4;
+//    double R21 = s1 * cos_4 * c5 + c1 * s5;
+//    double R22 = -s1 * cos_4 * s5 + c1 * c5;
+//    double R23 = s1 * sin_4;
+//    double R31 = -sin_4 * c5;
+//    double R32 = sin_4 * s5;
+//    double R33 = cos_4;
+//
+//    // Mostrar la matriz R
+//    ui.lblRotacion->setText(
+//        QString(
+//            "Rot =\n"
+//            "[ %1  %2  %3 ]\n"
+//            "[ %4  %5  %6 ]\n"
+//            "[ %7  %8  %9 ]"
+//        ).arg(R11, 0, 'f', 3).arg(R12, 0, 'f', 3).arg(R13, 0, 'f', 3)
+//        .arg(R21, 0, 'f', 3).arg(R22, 0, 'f', 3).arg(R23, 0, 'f', 3)
+//        .arg(R31, 0, 'f', 3).arg(R32, 0, 'f', 3).arg(R33, 0, 'f', 3)
+//    );
+//
+//    // Posición P
+//    double S = a2 * s2 + a3 * sin_3 + (a4 + a5) * sin_4;
+//    double px = c1 * S;
+//    double py = s1 * S;
+//    double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
+//
+//    // Mostrar la posición
+//    ui.lblPosicionActual->setText(
+//        QString("Pos actual: [ %1, %2, %3, %4, %5, %6 ] grados")
+//        .arg(q[0], 0, 'f', 1)
+//        .arg(q[1], 0, 'f', 1)
+//        .arg(q[2], 0, 'f', 1)
+//        .arg(q[3], 0, 'f', 1)
+//        .arg(q[4], 0, 'f', 1)
+//        .arg(q[5], 0, 'f', 1)
+//    );
+//}
 
-    // Ángulos acumulados
-    double ang3 = q2 + q3;
-    double ang4 = q2 + q3 + q4;
+void interfaz_robot::ActualizarInterfaz() {
+    QString texto = QString("Motores: %1, %2, %3, %4, %5, %6")
+        .arg(q[0])
+        .arg(q[1])
+        .arg(q[2])
+        .arg(q[3])
+        .arg(q[4])
+        .arg(q[5]);
 
-    // Preparación de senos y cosenos
-    double c1 = cos(q1), s1 = sin(q1);
-    double c2 = cos(q2), s2 = sin(q2);
-    double c5 = cos(q5), s5 = sin(q5);
-    double sin_3 = sin(ang3), cos_3 = cos(ang3);
-    double sin_4 = sin(ang4), cos_4 = cos(ang4);
-
-    // Matriz de rotación R
-    double R11 = c1 * cos_4 * c5 - s1 * s5;
-    double R12 = -c1 * cos_4 * s5 - s1 * c5;
-    double R13 = c1 * sin_4;
-    double R21 = s1 * cos_4 * c5 + c1 * s5;
-    double R22 = -s1 * cos_4 * s5 + c1 * c5;
-    double R23 = s1 * sin_4;
-    double R31 = -sin_4 * c5;
-    double R32 = sin_4 * s5;
-    double R33 = cos_4;
-
-    // Mostrar la matriz R
-    ui.lblRotacion->setText(
-        QString(
-            "Rot =\n"
-            "[ %1  %2  %3 ]\n"
-            "[ %4  %5  %6 ]\n"
-            "[ %7  %8  %9 ]"
-        ).arg(R11, 0, 'f', 3).arg(R12, 0, 'f', 3).arg(R13, 0, 'f', 3)
-        .arg(R21, 0, 'f', 3).arg(R22, 0, 'f', 3).arg(R23, 0, 'f', 3)
-        .arg(R31, 0, 'f', 3).arg(R32, 0, 'f', 3).arg(R33, 0, 'f', 3)
-    );
-
-    // Posición P
-    double S = a2 * s2 + a3 * sin_3 + (a4 + a5) * sin_4;
-    double px = c1 * S;
-    double py = s1 * S;
-    double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
-
-    // Mostrar la posición
-    ui.lblPosicionActual->setText(
-        QString("Pos actual: [ %1, %2, %3, %4, %5, %6 ] grados")
-        .arg(q[0], 0, 'f', 1)
-        .arg(q[1], 0, 'f', 1)
-        .arg(q[2], 0, 'f', 1)
-        .arg(q[3], 0, 'f', 1)
-        .arg(q[4], 0, 'f', 1)
-        .arg(q[5], 0, 'f', 1)
-    );
+    ui.lblMotores->setText(texto);
 }
 
 
@@ -625,8 +652,7 @@ void interfaz_robot::ProcesarImagen()
 			lejano_baseRobot.x - centro_baseRobot.x) * RAD2DEG;
 
 		CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-
-        // Mover agarrin
+        TrasladarPieza();
     }
 }
 
@@ -741,7 +767,9 @@ void interfaz_robot::MoverRobotActual()
     m_robot->enviarComando(comando);
 
     qDebug() << "Robot moviéndose a: " << comando;
-    Directa(); // Actualizar posición en la interfaz
+    //Directa(); // Actualizar posición en la interfaz
+    // Actualizar información de los motores en la interfaz
+    ActualizarInterfaz();
 }
 
 void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
@@ -769,7 +797,9 @@ void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
     m_robot->enviarComando(comando);
 
     qDebug() << "Pinza movida. Comando enviado:" << comando;
-    Directa(); // Actualizar la interfaz
+    //Directa(); // Actualizar la interfaz
+    // Actualizar información de los motores en la interfaz
+    ActualizarInterfaz();
 }
 
 
@@ -870,5 +900,8 @@ void interfaz_robot::TrasladarPieza()
     MoverPosInterm();
 
     qDebug() << "Pieza trasladada";
+
+    // Actualizar información de los motores en la interfaz
+    ActualizarInterfaz();
 }
 

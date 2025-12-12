@@ -1016,30 +1016,17 @@ QPushButton:disabled {
        <property name="title">
         <string>Información</string>
        </property>
-       <widget class="QLabel" name="lblRotacion">
+       <widget class="QLabel" name="lblMotores">
         <property name="geometry">
          <rect>
-          <x>70</x>
+          <x>10</x>
           <y>30</y>
-          <width>141</width>
+          <width>431</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Rotacion</string>
-        </property>
-       </widget>
-       <widget class="QLabel" name="lblPosicionActual">
-        <property name="geometry">
-         <rect>
-          <x>270</x>
-          <y>30</y>
-          <width>101</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Posicion</string>
+         <string>Motores</string>
         </property>
        </widget>
       </widget>
