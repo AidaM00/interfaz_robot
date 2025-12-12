@@ -913,7 +913,7 @@ void interfaz_robot::TrasladarPieza()
     qDebug() << "3. Bajando brazo a valor original: q2 =" << q[2];
     Esperar(1500); // Esperar 1.5 segundos por si acaso
 
-    // 4: Abrir pinza
+    // 4: Abrir pinza 
     qDebug() << "4. Abriendo pinza";
     AbrirCerrarPinza(0);   // 0 = abrir pinza 
     Esperar(1500); // Esperar 1.5 segundos por si acaso
