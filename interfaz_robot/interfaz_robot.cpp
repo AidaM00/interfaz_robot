@@ -56,7 +56,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
 
     camara = new CVideoAcquisition(0);
     // Conectar botones con sus slots
-    connect(ui.btnInicio, SIGNAL(clicked()), this, SLOT(startStopCapture()));
+    connect(ui.btnInicio, SIGNAL(toggled(bool)), this, SLOT(startStopCapture(bool)));
     connect(ui.btnGuardar, SIGNAL(clicked()), this, SLOT(GuardarImagen()));
     connect(ui.btnMover1, SIGNAL(clicked()), this, SLOT(MoverEje()));
     connect(ui.btnMoverTodos, SIGNAL(clicked()), this, SLOT(MoverTodosLosEjes()));
@@ -69,6 +69,9 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnProcesar, SIGNAL(clicked()), this, SLOT(ProcesarImagen()));
 	connect(ui.btnPosInterm, SIGNAL(clicked()), this, SLOT(MoverPosInterm()));
     connect(ui.btnTrasladarPieza, SIGNAL(clicked()), this, SLOT(TrasladarPieza()));
+    connect(ui.btnMoverPosicion, SIGNAL(clicked()), this, SLOT(MoverACota()));
+    connect(ui.btnComenzar, SIGNAL(clicked()), this, SLOT(onComenzar()));
+    connect(ui.btnCoger, SIGNAL(clicked()), this, SLOT(onCoger()));
 
     // Conexiones para detectar cambios en los spinbox
     connect(ui.spinEje0, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
@@ -108,34 +111,72 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnMoverTodos->setEnabled(habilitar);
 }
 
-void interfaz_robot::startStopCapture()
+void interfaz_robot::startStopCapture(bool capturando)
 {
-    static bool capturando = false;
-    capturando = !capturando;
-
     if (capturando) {
-        camara->startStopCapture(true);  // Iniciar cámara
-        timerVideo->start(33);           // Actualizar cada 33 ms (unos 30 FPS)
+		m_capturando = true;
+        getNewFrame();
+        //camara->startStopCapture(true);  // Iniciar cámara
+        //timerVideo->start(33);           // Actualizar cada 33 ms (unos 30 FPS)
 
-        ui.btnInicio->setText("Detener");
+        //ui.btnInicio->setText("Detener");
     }
     else {
-        timerVideo->stop();              // Detener refresco
-        camara->startStopCapture(false);
-        ui.btnInicio->setText("Iniciar");
+        m_capturando = false;
+        //timerVideo->stop();              // Detener refresco
+        //camara->startStopCapture(false);
+        //ui.btnInicio->setText("Iniciar");
     }
+}
+
+void interfaz_robot::getNewFrame()
+{
+    if (m_capturando)
+    {
+        //cv::Mat frame = camara->getImage();
+		MostrarVideo();
+        if (m_comenzarProcesado)
+        {
+			cv::Point2f centro, lejano;
+            cv::Mat frame = camara->getImage();
+            PuntosProcesados pts = ComenzarProcesado(frame);
+            MostrarFrame(frame, pts.centro, pts.lejano);
+			m_comenzarProcesado = false;
+            if (m_cogerPieza)
+            {
+                //DECIRLE QUE IMAGEN COGER PARA IR A BUSCARLO
+                Mat K = leerMatriz("K.txt");
+                Mat RTpc = leerMatriz("RT_panel_camara.txt");
+                Mat RTcr = leerMatriz("RT_camara_base.txt");
+
+                cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
+                cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano, K, RTpc, RTcr);
+
+                float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
+                    lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;
+
+                CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+                TrasladarPieza();
+				m_cogerPieza = false;
+            }
+            
+        }
+
+		QTimer::singleShot(30, this, SLOT(getNewFrame())); // Llama a sí misma cada 30 ms
+    }    
 }
 
 void interfaz_robot::MostrarVideo()
 {
+    camara->startStopCapture(true);
     cv::Mat frame = camara->getImage();
     if (frame.empty()) {
         qDebug() << "Frame vacío recibido";
         return;
     }
 
-    // Guardamos una copia del último frame mostrado
-    ultimoFrame = frame.clone();
+    //// Guardamos una copia del último frame mostrado
+    //ultimoFrame = frame.clone();
 
     cv::Mat rgbFrame;
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
@@ -149,9 +190,44 @@ void interfaz_robot::MostrarVideo()
             Qt::SmoothTransformation
         )
     );
-    
-
 }
+
+void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
+{
+    if (frame.empty()) {
+        qDebug() << "Frame vacío recibido";
+        return;
+    }
+
+    //// Guardamos una copia del último frame mostrado
+    //ultimoFrame = frame.clone();
+
+    cv::Mat rgbFrame;
+    cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
+    //cv::circle(maskColor, cv::Point(centro.x, centro.y), 6, cv::Scalar(0, 0, 255), -1); //CORREGIR
+    //cv::circle();  // MOSTRAR EN LA FOTO LOS DOS CIRCULITOS DEL CENTRO Y EL PTO LEJANO  
+    QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
+
+    ui.lblInicio->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+    ui.lblInicio->setPixmap(
+        QPixmap::fromImage(img).scaled(
+            ui.lblInicio->size(),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+        )
+    );
+}
+
+void interfaz_robot::onComenzar()
+{
+    m_comenzarProcesado = true;
+}
+
+void interfaz_robot::onCoger()
+{
+    m_cogerPieza = true;
+}
+
 
 void interfaz_robot::GuardarImagen()
 {
@@ -220,6 +296,11 @@ void interfaz_robot::MoverEje()
     int eje = ui.comboBoxMover1->currentIndex();
     int grados = ui.spinMover1->value();
 
+	MoverEje(eje, grados);
+}
+
+void interfaz_robot::MoverEje(int indexEje, int grados)
+{
     // Validación
     if (grados < -90 || grados > 90) {
         QMessageBox::warning(this, "Error", "El valor de grados debe estar entre -90 y 90.");
@@ -228,19 +309,17 @@ void interfaz_robot::MoverEje()
 
     // Enviar comando al robot
     if (m_robot) {
-        qDebug() << "Moviendo eje" << eje << "a" << grados << "grados.";
-        q[eje] = grados;
-        m_robot->mover(eje, grados);
+        qDebug() << "Moviendo eje" << indexEje << "a" << grados << "grados.";
+        q[indexEje] = grados;
+        m_robot->mover(indexEje, grados);
         QMessageBox::information(this, "Movimiento",
-            QString("Eje %1 movido a %2 grados").arg(eje).arg(grados));
-        //Directa();  
-		// Actualizar información de los motores en la interfaz
-		ActualizarInterfaz();
+            QString("Eje %1 movido a %2 grados").arg(indexEje).arg(grados));
+        // Actualizar información de los motores en la interfaz
+        ActualizarInterfaz();
     }
     else {
         QMessageBox::critical(this, "Error", "Robot no inicializado.");
     }
-
 }
 
 void interfaz_robot::MoverTodosLosEjes()
@@ -254,7 +333,12 @@ void interfaz_robot::MoverTodosLosEjes()
         ui.spinEje4->value(),
         ui.spinEje5->value()
     };
+	MoverTodosLosEjes(angulos);
+    
+}
 
+void interfaz_robot::MoverTodosLosEjes(int *angulos)
+{
     // Verificar que todos los valores estén dentro del rango permitido
     for (int i = 0; i < 6; ++i)
     {
@@ -288,7 +372,6 @@ void interfaz_robot::MoverTodosLosEjes()
 
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
-    //Directa();  // Calcula y muestra la rotación y posición resultante
 }
 
 void interfaz_robot::MoverPosInterm()
@@ -318,8 +401,6 @@ void interfaz_robot::MoverPosInterm()
     m_robot->enviarComando(comando);
     qDebug() << "Moviendo robot a posición intermedia: " << comando;
 
-    // Actualizar la interfaz con la posición
-    //Directa();
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
 }
@@ -338,28 +419,6 @@ void interfaz_robot::VerificarRango(int valor)
         spin->setStyleSheet("color: black;");
     }
 }
-
-//void interfaz_robot::ActualizarPosicionRobot()
-//{
-//    if (!m_robot) {
-//        ui.lblPosicionActual->setText("Robot no conectado");
-//        return;
-//    }
-//    
-//    std::vector<int> angulos = m_robot->obtenerPosicionActual();
-//
-//    if (angulos.size() == 6) {
-//        QString texto = QString("Posición actual: [ %1°, %2°, %3°, %4°, %5°, %6° ]")
-//            .arg(angulos[0]).arg(angulos[1]).arg(angulos[2])
-//            .arg(angulos[3]).arg(angulos[4]).arg(angulos[5]);
-//
-//        ui.lblPosicionActual->setText(texto);
-//    }
-//    else {
-//        ui.lblPosicionActual->setText("Error al leer posición");
-//    }
-//}
-
 
 
 using Mat4 = std::array<std::array<double, 4>, 4>;
@@ -383,67 +442,6 @@ static Mat4 Rz(double th) { double c = cos(th), s = sin(th); Mat4 m = matIdentit
 static Mat4 Ry(double th) { double c = cos(th), s = sin(th); Mat4 m = matIdentity(); m[0][0] = c; m[0][2] = s; m[2][0] = -s; m[2][2] = c; return m; }
 static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
 
-
-
-//void interfaz_robot::Directa() {
-//    // Convertir ángulos a radianes
-//    double q1 = q[0] * DEG2RAD;
-//    double q2 = q[1] * DEG2RAD;
-//    double q3 = q[2] * DEG2RAD;
-//    double q4 = q[3] * DEG2RAD;
-//    double q5 = q[4] * DEG2RAD;
-//
-//    // Ángulos acumulados
-//    double ang3 = q2 + q3;
-//    double ang4 = q2 + q3 + q4;
-//
-//    // Preparación de senos y cosenos
-//    double c1 = cos(q1), s1 = sin(q1);
-//    double c2 = cos(q2), s2 = sin(q2);
-//    double c5 = cos(q5), s5 = sin(q5);
-//    double sin_3 = sin(ang3), cos_3 = cos(ang3);
-//    double sin_4 = sin(ang4), cos_4 = cos(ang4);
-//
-//    // Matriz de rotación R
-//    double R11 = c1 * cos_4 * c5 - s1 * s5;
-//    double R12 = -c1 * cos_4 * s5 - s1 * c5;
-//    double R13 = c1 * sin_4;
-//    double R21 = s1 * cos_4 * c5 + c1 * s5;
-//    double R22 = -s1 * cos_4 * s5 + c1 * c5;
-//    double R23 = s1 * sin_4;
-//    double R31 = -sin_4 * c5;
-//    double R32 = sin_4 * s5;
-//    double R33 = cos_4;
-//
-//    // Mostrar la matriz R
-//    ui.lblRotacion->setText(
-//        QString(
-//            "Rot =\n"
-//            "[ %1  %2  %3 ]\n"
-//            "[ %4  %5  %6 ]\n"
-//            "[ %7  %8  %9 ]"
-//        ).arg(R11, 0, 'f', 3).arg(R12, 0, 'f', 3).arg(R13, 0, 'f', 3)
-//        .arg(R21, 0, 'f', 3).arg(R22, 0, 'f', 3).arg(R23, 0, 'f', 3)
-//        .arg(R31, 0, 'f', 3).arg(R32, 0, 'f', 3).arg(R33, 0, 'f', 3)
-//    );
-//
-//    // Posición P
-//    double S = a2 * s2 + a3 * sin_3 + (a4 + a5) * sin_4;
-//    double px = c1 * S;
-//    double py = s1 * S;
-//    double pz = a1 + a2 * c2 + a3 * cos_3 + (a4 + a5) * cos_4;
-//
-//    // Mostrar la posición
-//    ui.lblPosicionActual->setText(
-//        QString("Pos actual: [ %1, %2, %3, %4, %5, %6 ] grados")
-//        .arg(q[0], 0, 'f', 1)
-//        .arg(q[1], 0, 'f', 1)
-//        .arg(q[2], 0, 'f', 1)
-//        .arg(q[3], 0, 'f', 1)
-//        .arg(q[4], 0, 'f', 1)
-//        .arg(q[5], 0, 'f', 1)
-//    );
-//}
 
 void interfaz_robot::ActualizarInterfaz() {
     QString texto = QString("Motores: %1, %2, %3, %4, %5, %6")
@@ -587,75 +585,104 @@ void interfaz_robot::CalibrarCamaraRobot()
 //}
 
 
+//void interfaz_robot::ProcesarImagen()
+//{
+    //namespace fs = std::filesystem;
+    //fs::path rutaEjecutable = fs::current_path();
+    //std::vector<fs::path> imagenes;
 
-void interfaz_robot::ProcesarImagen()
+    //// Buscar imágenes "pieza_*.png"
+    //for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
+    //    std::string nombre = entry.path().filename().string();
+    //    if (nombre.rfind("pieza_", 0) == 0 &&
+    //        nombre.find("segmentada") == std::string::npos &&
+    //        entry.path().extension() == ".png") {
+    //        imagenes.push_back(entry.path());
+    //    }
+    //}
+
+    //if (imagenes.empty()) {
+    //    std::cout << "No se encontraron imágenes que empiecen por 'pieza_'.\n";
+    //    return;
+    //}
+
+    //std::sort(imagenes.begin(), imagenes.end());
+
+    //for (const auto& rutaImagen : imagenes) {
+    //    std::cout << "\nProcesando: " << rutaImagen << std::endl;
+    //    cv::Mat img = cv::imread(rutaImagen.string());
+   
+	
+    
+        //if (img.empty()) {
+        //    std::cerr << "No se pudo cargar " << rutaImagen << "\n";
+        //    continue;
+        //}
+
+        //// Recortar y reescalar
+        //cv::Mat procesada = recortarYReescalar(img);
+        //if (procesada.empty()) {
+        //    std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
+        //    continue;
+        //}
+
+        //// Localizar pieza y guardar imagen 
+        //cv::Point2f centro(0, 0);
+        //cv::Point2f lejano(0,0);
+        //LocalizarPieza(procesada, centro, lejano);
+        //std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
+
+        //Mat K = leerMatriz("K.txt");
+        //Mat RTpc = leerMatriz("RT_panel_camara.txt");
+        //Mat RTcr = leerMatriz("RT_camara_base.txt");
+        //cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
+        //// Quitar distorsión
+        //std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
+        //cv::undistortPoints(srcPoints1, undistortedPoints_centro, K, distCoeffs, cv::noArray(), K);
+        //cv::Point2d centro_sin_distorsion = undistortedPoints_centro[0];
+
+        //std::vector<cv::Point2d> srcPoints2{ lejano }, undistortedPoints_lejano;
+        //cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
+        //cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
+
+  //      cv::Point3d centro_baseRobot = pixelToWorld3D(centro_sin_distorsion, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
+  //      cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano_sin_distorsion, K, RTpc, RTcr);
+
+		//float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
+		//	lejano_baseRobot.x - centro_baseRobot.x) * RAD2DEG;
+
+		//CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+  //      TrasladarPieza();
+    
+//}
+
+PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
 {
-    namespace fs = std::filesystem;
-    fs::path rutaEjecutable = fs::current_path();
-    std::vector<fs::path> imagenes;
+    // Recortar y reescalar
+    cv::Mat procesada = recortarYReescalar(img);
 
-    // Buscar imágenes "pieza_*.png"
-    for (const auto& entry : fs::directory_iterator(rutaEjecutable)) {
-        std::string nombre = entry.path().filename().string();
-        if (nombre.rfind("pieza_", 0) == 0 &&
-            nombre.find("segmentada") == std::string::npos &&
-            entry.path().extension() == ".png") {
-            imagenes.push_back(entry.path());
-        }
-    }
+    // Localizar pieza y guardar imagen 
+    cv::Point2f centro(0, 0);
+    cv::Point2f lejano(0, 0);
+    LocalizarPieza(procesada, centro, lejano);
+    std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
 
-    if (imagenes.empty()) {
-        std::cout << "No se encontraron imágenes que empiecen por 'pieza_'.\n";
-        return;
-    }
+    Mat K = leerMatriz("K.txt");
+    Mat RTpc = leerMatriz("RT_panel_camara.txt");
+    Mat RTcr = leerMatriz("RT_camara_base.txt");
+    cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
 
-    std::sort(imagenes.begin(), imagenes.end());
+    // Quitar distorsión
+    std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
+    cv::undistortPoints(srcPoints1, undistortedPoints_centro, K, distCoeffs, cv::noArray(), K);
+    cv::Point2d centro_sin_distorsion = undistortedPoints_centro[0];
 
-    for (const auto& rutaImagen : imagenes) {
-        std::cout << "\nProcesando: " << rutaImagen << std::endl;
-        cv::Mat img = cv::imread(rutaImagen.string());
-        if (img.empty()) {
-            std::cerr << "No se pudo cargar " << rutaImagen << "\n";
-            continue;
-        }
+    std::vector<cv::Point2d> srcPoints2{ lejano }, undistortedPoints_lejano;
+    cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
+    cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
 
-        // Recortar y reescalar
-        cv::Mat procesada = recortarYReescalar(img);
-        if (procesada.empty()) {
-            std::cerr << "Error: resultado vacío tras recortarYReescalar.\n";
-            continue;
-        }
-
-        // Localizar pieza y guardar imagen 
-        cv::Point2f centro(0, 0);
-        cv::Point2f lejano(0,0);
-        LocalizarPieza(procesada, centro, lejano);
-        std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
-
-        Mat K = leerMatriz("K.txt");
-        Mat RTpc = leerMatriz("RT_panel_camara.txt");
-        Mat RTcr = leerMatriz("RT_camara_base.txt");
-        cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
-        // Quitar distorsión
-        std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
-        cv::undistortPoints(srcPoints1, undistortedPoints_centro, K, distCoeffs, cv::noArray(), K);
-        cv::Point2d centro_sin_distorsion = undistortedPoints_centro[0];
-
-        std::vector<cv::Point2d> srcPoints2{ lejano }, undistortedPoints_lejano;
-        cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
-        cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
-
-        cv::Point3d centro_baseRobot = pixelToWorld3D(centro_sin_distorsion, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
-        cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano_sin_distorsion, K, RTpc, RTcr);
-
-		float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
-			lejano_baseRobot.x - centro_baseRobot.x) * RAD2DEG;
-
-		CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-        TrasladarPieza();
-    }
+    return { centro_sin_distorsion, lejano_sin_distorsion };
 }
-
 
 
 
@@ -767,7 +794,6 @@ void interfaz_robot::MoverRobotActual()
     m_robot->enviarComando(comando);
 
     qDebug() << "Robot moviéndose a: " << comando;
-    //Directa(); // Actualizar posición en la interfaz
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
 }
@@ -797,7 +823,6 @@ void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
     m_robot->enviarComando(comando);
 
     qDebug() << "Pinza movida. Comando enviado:" << comando;
-    //Directa(); // Actualizar la interfaz
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
 }
@@ -873,21 +898,19 @@ void interfaz_robot::TrasladarPieza()
     qDebug() << "Inicio de traslado de pieza";
 
     // 1: Subir brazo: q2 - 20°
-    q[2] = q_original[2] - 20.0;
     qDebug() << "1. Subiendo brazo: q2 =" << q[2];
-    MoverRobotActual();
+    MoverEje(2, q_original[2] - 20.0);
 	Esperar(1500); // Esperar 1.5 segundos por si acaso
 
     // 2: Girar base a 90° (q0 = 90°)
-    q[0] = 90.0;
+    int angulos[6] = { 90,5 ,70 ,90 ,0, round(q_original[5]) };
     qDebug() << "2. Girando base a 90 grados: q0 =" << q[0];
-    MoverRobotActual();
+	MoverTodosLosEjes(angulos);
     Esperar(1500); // Esperar 1.5 segundos por si acaso
 
     // 3: Bajar brazo nuevamente: q2 + 20°
-    q[2] = q_original[2];
+    MoverEje(2, 80);
     qDebug() << "3. Bajando brazo a valor original: q2 =" << q[2];
-    MoverRobotActual();
     Esperar(1500); // Esperar 1.5 segundos por si acaso
 
     // 4: Abrir pinza
@@ -897,7 +920,7 @@ void interfaz_robot::TrasladarPieza()
 
     // 5: Volver a posición intermedia
     qDebug() << "5. Volviendo a posicion intermedia";
-    MoverPosInterm();
+    MoverEje(2, 70);
 
     qDebug() << "Pieza trasladada";
 
@@ -905,3 +928,15 @@ void interfaz_robot::TrasladarPieza()
     ActualizarInterfaz();
 }
 
+void interfaz_robot::MoverACota()
+{
+    // Leer los valores actuales de los spinbox
+    double punto3D[3] = {
+        ui.spinX->value(),
+        ui.spinY->value(),
+        ui.spinZ->value()
+    };
+    double angulo = ui.spinA->value();
+    CinematicaInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
+    TrasladarPieza();
+}

@@ -10,6 +10,10 @@
 
 namespace Ui { class interfaz_robot; }
 namespace fs = std::filesystem;
+struct PuntosProcesados {
+    cv::Point2d centro;
+    cv::Point2d lejano;
+};
 
 class interfaz_robot : public QMainWindow
 {
@@ -27,27 +31,32 @@ public:
 
 private slots:
     void HabilitarBotones(bool habilitar);
-    void startStopCapture();
+    void startStopCapture(bool capturando);
     void MostrarVideo();
+    void MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano);
     void GuardarImagen();
     void MoverEje();
     void MoverTodosLosEjes();
 	void MoverPosInterm();
     void VerificarRango(int valor);
     void iniciarComRobot();
-    //void ActualizarPosicionRobot();
-    //void Directa();
     void ActualizarInterfaz();
     void CalibrarCamara();
 	void CalibrarPanel();
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
-    void ProcesarImagen();
     void CinematicaInversa(double cx, double cy, double cz, double angulo);
     void MoverRobotActual();
     void AbrirCerrarPinza(int accion);
     void Esperar(int ms);
     void TrasladarPieza();
+    void MoverACota();
+    void MoverEje(int indexEje, int grados);
+    void MoverTodosLosEjes(int* angulos);
+    void getNewFrame();
+    PuntosProcesados ComenzarProcesado(Mat img);
+    void onComenzar();
+    void onCoger();
 
 private:
     Ui::interfaz_robotClass ui;
@@ -71,6 +80,9 @@ private:
     // Parámetros del panel
     cv::Size boardSize=cv::Size(9, 6);     // Esquinas internas
     float m_squareSize = 10.4f;     // mm
+    bool m_capturando;
+    bool m_comenzarProcesado;
+	bool m_cogerPieza;
 
 };
 
