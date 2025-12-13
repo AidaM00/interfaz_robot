@@ -55,6 +55,7 @@ private slots:
     PuntosProcesados ComenzarProcesado(Mat img);
     void onComenzar();
     void onCoger();
+    void CargarMatricesCalibracion();
 
 private:
     Ui::interfaz_robotClass ui;
@@ -72,7 +73,13 @@ private:
     const double a5 = 132;
 
     // Ángulos actuales (grados)
-    double q[6] = { 0, 0, 0, 0, 0, 0 };  // Ángulos actuales del robot en grados
+    double m_q[6] = { 0, 0, 0, 0, 0, 0 };  // Ángulos actuales del robot en grados
+
+	// Matrices de calibración
+    cv::Mat m_K;          // Intrínsecos cámara
+    cv::Mat m_D;          // Distorsión
+    cv::Mat m_RTpc;       // Panel a cámara
+    cv::Mat m_RTcr;       // Cámara a robot
 
     int contador = 1; // Contador global para los archivos (calib cámara-robot)
     // Parámetros del panel

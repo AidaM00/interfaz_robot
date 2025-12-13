@@ -46,12 +46,10 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
     ui.setupUi(this);
 
-	// Inicializar los valores de los ejes a 0 (robot en posición vertical)
-    for (int i = 0; i < 6; i++) {
-        q[i] = 0;
-    }
+	//Cargar matrices de calibración
+    CargarMatricesCalibracion();
 
-    // Mostrar los valores iniciales en la interfaz
+    // Mostrar los valores iniciales de m_q[] en la interfaz
     ActualizarInterfaz();
 
     camara = new CVideoAcquisition(0);
@@ -163,16 +161,11 @@ void interfaz_robot::getNewFrame()
 
             cv::imwrite("pieza_final.png", m_ultimoFrame);
 
-            // Cálculos robóticos 
-            Mat K = leerMatriz("K.txt");
-            Mat RTpc = leerMatriz("RT_panel_camara.txt");
-            Mat RTcr = leerMatriz("RT_camara_base.txt");
-
             /*cv::Point3d centro_baseRobot =
-                pixelToWorld3D(m_ultimosPuntos.centro, K, RTpc, RTcr);
+                pixelToWorld3D(m_ultimosPuntos.centro, m_K, m_RTpc, m_RTcr);
 
             cv::Point3d lejano_baseRobot =
-                pixelToWorld3D(m_ultimosPuntos.lejano, K, RTpc, RTcr);
+                pixelToWorld3D(m_ultimosPuntos.lejano, m_K, m_RTpc, m_RTcr);
 
             float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;*/
 
@@ -195,7 +188,6 @@ void interfaz_robot::getNewFrame()
 
     QTimer::singleShot(30, this, SLOT(getNewFrame()));
 }
-
 
 void interfaz_robot::MostrarVideo()
 {
@@ -253,6 +245,31 @@ void interfaz_robot::onCoger()
     m_cogerPieza = true;
 }
 
+void interfaz_robot::CargarMatricesCalibracion()
+{
+    m_K = leerMatriz("K.txt");
+    m_D = leerMatriz("Kc.txt");
+    m_RTpc = leerMatriz("RT_panel_camara.txt");
+    m_RTcr = leerMatriz("RT_camara_base.txt");
+
+    if (m_K.empty() || m_D.empty()) {
+        QMessageBox::critical(this, "Error",
+            "No se pudieron cargar las matrices intrínsecas de la cámara.");
+        return;
+    }
+
+    if (m_RTpc.empty()) {
+        qDebug() << "Aviso: RT_panel_camara no cargada.";
+    }
+
+    if (m_RTcr.empty()) {
+        qDebug() << "Aviso: RT_camara_base no cargada.";
+    }
+
+    qDebug() << "Matrices de calibración cargadas correctamente.";
+}
+
+
 void interfaz_robot::GuardarImagen()
 {
     cv::Mat img = camara->getImage();  // Obtener la imagen actual de la cámara
@@ -288,10 +305,7 @@ void interfaz_robot::CalibrarCamara()
 
 void interfaz_robot::CalibrarPanel()
 {
-    // Cargar parámetros intrínsecos de la cámara
-    cv::Mat K = leerMatriz("K.txt");
-    cv::Mat D = leerMatriz("Kc.txt");
-    if (K.empty() || D.empty()) 
+    if (m_K.empty() || m_D.empty()) 
     {
         QMessageBox::warning(this, "Error", "No se pudo leer K.txt o Kc.txt.");
         return;
@@ -303,7 +317,7 @@ void interfaz_robot::CalibrarPanel()
     // Nombre del archivo donde guardar la matriz RT
     std::string outFile = "RT_panel_camara.txt";
 
-    bool ok = calibratePanel(imgFile, K, D, boardSize, m_squareSize, outFile);
+    bool ok = calibratePanel(imgFile, m_K, m_D, boardSize, m_squareSize, outFile);
 
     if (ok)
     {
@@ -334,7 +348,7 @@ void interfaz_robot::MoverEje(int indexEje, int grados)
     // Enviar comando al robot
     if (m_robot) {
         qDebug() << "Moviendo eje" << indexEje << "a" << grados << "grados.";
-		q[indexEje] = grados; //Actualizar ángulo actual
+		m_q[indexEje] = grados; //Actualizar ángulo actual
         m_robot->mover(indexEje, grados);
         /*QMessageBox::information(this, "Movimiento",
             QString("Eje %1 movido a %2 grados").arg(indexEje).arg(grados));*/
@@ -394,7 +408,7 @@ void interfaz_robot::MoverTodosLosEjes(int *angulos)
 
 	// Actualizar los ángulos actuales
     for (int i = 0; i < 6; i++)
-        q[i] = angulos[i];
+        m_q[i] = angulos[i];
 
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
@@ -424,7 +438,7 @@ void interfaz_robot::MoverPosInterm()
 
     // Actualizar los ángulos actuales
     for (int i = 0; i < 6; i++)
-        q[i] = ang_deseado[i];
+        m_q[i] = ang_deseado[i];
 
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
@@ -469,16 +483,15 @@ static Mat4 Tz(double d) { Mat4 m = matIdentity(); m[2][3] = d; return m; }
 
 void interfaz_robot::ActualizarInterfaz() {
     QString texto = QString("Motores: %1, %2, %3, %4, %5, %6")
-        .arg(q[0])
-        .arg(q[1])
-        .arg(q[2])
-        .arg(q[3])
-        .arg(q[4])
-        .arg(q[5]);
+        .arg(m_q[0])
+        .arg(m_q[1])
+        .arg(m_q[2])
+        .arg(m_q[3])
+        .arg(m_q[4])
+        .arg(m_q[5]);
 
     ui.lblMotores->setText(texto);
 }
-
 
 void interfaz_robot::escribirMatriz(const std::string& nombreArchivo, const cv::Mat& M)
 {
@@ -571,7 +584,7 @@ void interfaz_robot::GuardarImagenYPose()
 
         // Actualizar los ángulos actuales
         for (int i = 0; i < 6; i++)
-            q[i] = q_spin[i];
+            m_q[i] = q_spin[i];
 
         // Actualizar información de los motores en la interfaz
         ActualizarInterfaz();
@@ -600,10 +613,7 @@ void interfaz_robot::CalibrarCamaraRobot()
         return;
     }
 
-    // Leer parámetros de cámara ya calibrada
-    Mat K = leerMatriz("K.txt");
-    Mat D = leerMatriz("Kc.txt");
-    if (K.empty() || D.empty()) {
+    if (m_K.empty() || m_D.empty()) {
         qDebug() << "Error: No se pudo leer K.txt o Kc.txt.";
         return;
     }
@@ -612,7 +622,7 @@ void interfaz_robot::CalibrarCamaraRobot()
     string outFile = "RT_camara_base.txt";
 
     // Ejecutar calibración
-    bool ok = calibrateCameraRobot(numImages, boardSize, m_squareSize, K, D, outFile);
+    bool ok = calibrateCameraRobot(numImages, boardSize, m_squareSize, m_K, m_D, outFile);
 
     if (ok)
         qDebug() << "Calibracion completa. RT camara-robot guardada";
@@ -637,18 +647,13 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     LocalizarPieza(procesada, centro, lejano);
     std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
 
-    Mat K = leerMatriz("K.txt");
-    Mat RTpc = leerMatriz("RT_panel_camara.txt");
-    Mat RTcr = leerMatriz("RT_camara_base.txt");
-    Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
-
     // Quitar distorsión
     std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
-    cv::undistortPoints(srcPoints1, undistortedPoints_centro, K, distCoeffs, cv::noArray(), K);
+    cv::undistortPoints(srcPoints1, undistortedPoints_centro, m_K, m_D, cv::noArray(), m_K);
     cv::Point2d centro_sin_distorsion = undistortedPoints_centro[0];
 
     std::vector<cv::Point2d> srcPoints2{ lejano }, undistortedPoints_lejano;
-    cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
+    cv::undistortPoints(srcPoints2, undistortedPoints_lejano, m_K, m_D, cv::noArray(), m_K);
     cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
 
     std::cout << "Centro sin dist" << centro_sin_distorsion << ". Lejano sin disr: " << lejano_sin_distorsion << std::endl;
@@ -716,10 +721,10 @@ void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
     }
 
     if (accion == 0) {
-        q[5] = 0;   // Abrir
+        m_q[5] = 0;   // Abrir
     }
     else if (accion == 1) {
-        q[5] = 85;  // Cerrar
+        m_q[5] = 85;  // Cerrar
     }
     else {
         QMessageBox::warning(this, "Error", "Acción inválida. Usa 0 para abrir, 1 para cerrar.");
@@ -727,12 +732,13 @@ void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
     }
 
     // Construir comando para el robot
-    QString comando = QString("#m5,%1*").arg(q[5]);
+    QString comando = QString("#m5,%1*").arg(m_q[5]);
 
     // Enviar el comando
     m_robot->enviarComando(comando);
 
     qDebug() << "Pinza movida. Comando enviado:" << comando;
+
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
 }
@@ -789,7 +795,7 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 
     // Actualizar los ángulos actuales
     for (int i = 0; i < 6; i++)
-        q[i] = q_deseado[i];
+        m_q[i] = q_deseado[i];
 
     // Actualizar información de los motores en la interfaz
     ActualizarInterfaz();
@@ -798,27 +804,27 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 
 void interfaz_robot::TrasladarPieza()
 {
-    //  q[] tiene la posición actual de los motores
+    //  m_q[] tiene la posición actual de los motores
     double q_original[6];
     for (int i = 0; i < 6; i++)
-        q_original[i] = q[i];
+        q_original[i] = m_q[i];
 
     qDebug() << "Inicio de traslado de pieza";
 
     // 1: Subir brazo: q2 - 20°
-    qDebug() << "1. Subiendo brazo: q2 =" << q[2];
+    qDebug() << "1. Subiendo brazo: q2 =" << m_q[2];
     MoverEje(2, q_original[2] - 20.0);
 	waitKey(1500); // Esperar 1.5 segundos por si acaso
 
     // 2: Mover a posición de seguridad
     int angulos[6] = { 90,5 ,70 ,90 ,0, round(q_original[5]) };
-    qDebug() << "2. Girando base a 90 grados: q0 =" << q[0];
+    qDebug() << "2. Girando base a 90 grados: q0 =" << m_q[0];
 	MoverTodosLosEjes(angulos);
     waitKey(1500); // Esperar 1.5 segundos por si acaso
 
     // 3: Bajar brazo nuevamente: q2 + 20°
     MoverEje(2, 80);
-    qDebug() << "3. Bajando brazo a valor original: q2 =" << q[2];
+    qDebug() << "3. Bajando brazo a valor original: q2 =" << m_q[2];
     waitKey(1500); // Esperar 1.5 segundos por si acaso
 
     // 4: Abrir pinza 
