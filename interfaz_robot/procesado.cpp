@@ -11,10 +11,10 @@ using namespace std;
 cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal) {
     // Puntos de la imagen original que queremos mapear
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(480, 173),    // Superior izquierda
-        cv::Point2f(1330, 183),   // Superior derecha
-        cv::Point2f(310, 926),    // Inferior izquierda
-        cv::Point2f(1490, 922)    // Inferior derecha
+        cv::Point2f(490, 192),    // Superior izquierda
+        cv::Point2f(1343, 205),   // Superior derecha
+        cv::Point2f(304, 988),    // Inferior izquierda
+        cv::Point2f(1505, 983)    // Inferior derecha
     };
 
     // Puntos destino (esquinas de la nueva imagen)
@@ -33,6 +33,9 @@ cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal) {
     // Aplicar la transformación
     cv::Mat imagenTransformada;
     cv::warpPerspective(imagenOriginal, imagenTransformada, h, cv::Size(anchoNuevo, altoNuevo));
+
+    // Guardar la imagen procesada
+    cv::imwrite("pieza_recortada_reescalada.png", imagenTransformada);
 
     return imagenTransformada;
 }
@@ -69,8 +72,8 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
     int umbralBrillo = calcularUmbralAdaptativo(canalV, 1.1);
     int umbralSatur = calcularUmbralAdaptativo(canalS, 0.9);
 
-    std::cout << "Umbral adaptativo - Brillo: " << umbralBrillo
-        << "  Saturacion: " << umbralSatur << std::endl;
+   /* std::cout << "Umbral adaptativo - Brillo: " << umbralBrillo
+        << "  Saturacion: " << umbralSatur << std::endl;*/
 
     // 5. Crear máscara por condiciones de brillo y saturación
     cv::Mat maskBrillo, maskSatur;
@@ -128,7 +131,7 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
     if (M.m00 != 0) {
         int cx = static_cast<int>(M.m10 / M.m00);
         int cy = static_cast<int>(M.m01 / M.m00);
-        std::cout << "Centroide: (" << cx << ", " << cy << ")" << std::endl;
+        //std::cout << "Centroide: (" << cx << ", " << cy << ")" << std::endl;
 
         centro = cv::Point2f(cx, cy);
 
@@ -149,7 +152,7 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
                 puntosDentro.push_back(p);
             }
         }
-        std::cout << "Puntos del contorno dentro del círculo: " << puntosDentro.size() << std::endl;
+        //std::cout << "Puntos del contorno dentro del círculo: " << puntosDentro.size() << std::endl;
 
         // Si hay puntos, generar un contorno cerrado usando convexHull
         std::vector<cv::Point> contornoDentro;
@@ -223,18 +226,18 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
 
         // Dibujar ptoLejano 
         cv::circle(maskColor, ptoLejano, 6, cv::Scalar(0, 0, 255), -1);
-        // Carpeta donde guardar
-        fs::path rutaGuardar = fs::current_path();
-        // Generar nombre con sufijo incremental
-        std::ostringstream nombreArchivo;
-        nombreArchivo << "pieza_localizada_"
-            << std::setw(2) << std::setfill('0') << contador_guardar
-            << ".png";
-        fs::path rutaSalida = rutaGuardar / nombreArchivo.str();
-        std::cout << "Guardando imagen segmentada en: " << rutaSalida << std::endl;
-        // Guardar imagen
-        cv::imwrite(rutaSalida.string(), maskColor);
-        // Incrementar contador para la siguiente imagen
-        contador_guardar++;
+        //// Carpeta donde guardar
+        //fs::path rutaGuardar = fs::current_path();
+        //// Generar nombre con sufijo incremental
+        //std::ostringstream nombreArchivo;
+        //nombreArchivo << "pieza_localizada_"
+        //    << std::setw(2) << std::setfill('0') << contador_guardar
+        //    << ".png";
+        //fs::path rutaSalida = rutaGuardar / nombreArchivo.str();
+        //std::cout << "Guardando imagen segmentada en: " << rutaSalida << std::endl;
+        //// Guardar imagen
+        //cv::imwrite(rutaSalida.string(), maskColor);
+        //// Incrementar contador para la siguiente imagen
+        //contador_guardar++;
     }
 }

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>995</width>
+    <width>1011</width>
     <height>687</height>
    </rect>
   </property>
@@ -298,6 +298,12 @@ QPushButton:disabled {
 #btnCalibrarCamaraRobot{
     font-weight: bold;
 }
+#btnComenzar{
+    font-weight: bold;
+}
+#btnCoger{
+    font-weight: bold;
+}
 
 
 
@@ -317,9 +323,15 @@ QPushButton:disabled {
         <rect>
          <x>10</x>
          <y>30</y>
-         <width>400</width>
-         <height>74</height>
+         <width>461</width>
+         <height>71</height>
         </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
        <property name="minimumSize">
         <size>
@@ -370,7 +382,7 @@ QPushButton:disabled {
          <x>10</x>
          <y>100</y>
          <width>461</width>
-         <height>101</height>
+         <height>61</height>
         </rect>
        </property>
        <property name="title">
@@ -379,27 +391,27 @@ QPushButton:disabled {
        <widget class="QPushButton" name="btnCalibrar">
         <property name="geometry">
          <rect>
-          <x>20</x>
+          <x>80</x>
           <y>20</y>
-          <width>131</width>
+          <width>101</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Calib. cámara</string>
+         <string>Cámara</string>
         </property>
        </widget>
        <widget class="QPushButton" name="btnCalibrarPanel">
         <property name="geometry">
          <rect>
-          <x>160</x>
+          <x>190</x>
           <y>20</y>
-          <width>131</width>
+          <width>101</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Calib. panel</string>
+         <string>Panel</string>
         </property>
        </widget>
        <widget class="QPushButton" name="btnCalibrarCamaraRobot">
@@ -407,38 +419,12 @@ QPushButton:disabled {
          <rect>
           <x>300</x>
           <y>20</y>
-          <width>131</width>
+          <width>111</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Calib. cam-robot</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnPoses">
-        <property name="geometry">
-         <rect>
-          <x>90</x>
-          <y>60</y>
-          <width>131</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Capturar poses</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnProcesar">
-        <property name="geometry">
-         <rect>
-          <x>230</x>
-          <y>60</y>
-          <width>131</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Procesar</string>
+         <string>Cámara-robot</string>
         </property>
        </widget>
       </widget>
@@ -446,7 +432,7 @@ QPushButton:disabled {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>210</y>
+         <y>170</y>
          <width>461</width>
          <height>61</height>
         </rect>
@@ -457,53 +443,40 @@ QPushButton:disabled {
        <widget class="QPushButton" name="btnPosInterm">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>20</y>
-          <width>131</width>
-          <height>31</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Posición intermedia</string>
-        </property>
-       </widget>
-       <widget class="QPushButton" name="btnTrasladarPieza">
-        <property name="geometry">
-         <rect>
-          <x>140</x>
+          <x>180</x>
           <y>20</y>
           <width>111</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Trasladar pieza</string>
+         <string>Pos intermedia</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btnComenzar">
+       <widget class="QPushButton" name="btnTrasladarPieza">
         <property name="geometry">
          <rect>
-          <x>290</x>
+          <x>300</x>
           <y>20</y>
-          <width>91</width>
+          <width>111</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Comenzar</string>
+         <string>Dejar pieza</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="btnCoger">
+       <widget class="QPushButton" name="btnPoses">
         <property name="geometry">
          <rect>
-          <x>380</x>
+          <x>70</x>
           <y>20</y>
-          <width>75</width>
+          <width>101</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Coger</string>
+         <string>Capt poses</string>
         </property>
        </widget>
       </widget>
@@ -511,9 +484,9 @@ QPushButton:disabled {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>280</y>
+         <y>290</y>
          <width>461</width>
-         <height>251</height>
+         <height>261</height>
         </rect>
        </property>
        <property name="title">
@@ -1022,18 +995,57 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>200</y>
+          <y>190</y>
           <width>441</width>
-          <height>51</height>
+          <height>61</height>
          </rect>
         </property>
+        <property name="styleSheet">
+         <string notr="true">QGroupBox {
+    background-color: #f7f7f7;
+    border: 2px solid #d0d0d0;
+    border-radius: 8px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 0 3px;
+    color: #333333;
+}
+
+QGroupBox QPushButton {
+    background-color: #e5e9f0;
+    border: 1px solid #bcc5d1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+QGroupBox QPushButton:hover {
+    background-color: #dce3ec;
+}
+
+QGroupBox QPushButton:pressed {
+    background-color: #c8d0da;
+}
+
+QGroupBox QSpinBox {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 4px;
+    background-color: #ffffff;
+}</string>
+        </property>
         <property name="title">
-         <string>GroupBox</string>
+         <string>Mover a cota</string>
         </property>
         <widget class="QSpinBox" name="spinZ">
          <property name="geometry">
           <rect>
-           <x>220</x>
+           <x>210</x>
            <y>20</y>
            <width>51</width>
            <height>31</height>
@@ -1043,16 +1055,19 @@ QPushButton:disabled {
           <set>Qt::AlignCenter</set>
          </property>
          <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::PlusMinus</enum>
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
+         <property name="maximum">
+          <number>300</number>
          </property>
         </widget>
         <widget class="QLabel" name="label_X">
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>10</y>
-           <width>41</width>
-           <height>41</height>
+           <y>20</y>
+           <width>31</width>
+           <height>31</height>
           </rect>
          </property>
          <property name="layoutDirection">
@@ -1070,7 +1085,7 @@ QPushButton:disabled {
           <rect>
            <x>40</x>
            <y>20</y>
-           <width>61</width>
+           <width>41</width>
            <height>31</height>
           </rect>
          </property>
@@ -1078,18 +1093,21 @@ QPushButton:disabled {
           <set>Qt::AlignCenter</set>
          </property>
          <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::PlusMinus</enum>
+          <enum>QAbstractSpinBox::NoButtons</enum>
          </property>
          <property name="minimum">
           <number>-30</number>
+         </property>
+         <property name="maximum">
+          <number>300</number>
          </property>
         </widget>
         <widget class="QSpinBox" name="spinY">
          <property name="geometry">
           <rect>
-           <x>130</x>
+           <x>120</x>
            <y>20</y>
-           <width>61</width>
+           <width>51</width>
            <height>31</height>
           </rect>
          </property>
@@ -1097,13 +1115,16 @@ QPushButton:disabled {
           <set>Qt::AlignCenter</set>
          </property>
          <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::PlusMinus</enum>
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
+         <property name="maximum">
+          <number>300</number>
          </property>
         </widget>
         <widget class="QLabel" name="label_Y">
          <property name="geometry">
           <rect>
-           <x>100</x>
+           <x>90</x>
            <y>20</y>
            <width>41</width>
            <height>31</height>
@@ -1125,7 +1146,7 @@ QPushButton:disabled {
         <widget class="QLabel" name="label_Z">
          <property name="geometry">
           <rect>
-           <x>190</x>
+           <x>180</x>
            <y>20</y>
            <width>41</width>
            <height>31</height>
@@ -1157,7 +1178,13 @@ QPushButton:disabled {
           <set>Qt::AlignCenter</set>
          </property>
          <property name="buttonSymbols">
-          <enum>QAbstractSpinBox::PlusMinus</enum>
+          <enum>QAbstractSpinBox::NoButtons</enum>
+         </property>
+         <property name="minimum">
+          <number>-50</number>
+         </property>
+         <property name="maximum">
+          <number>150</number>
          </property>
         </widget>
         <widget class="QLabel" name="label_A">
@@ -1176,7 +1203,7 @@ QPushButton:disabled {
           <string notr="true"/>
          </property>
          <property name="text">
-          <string>A</string>
+          <string>Ang</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -1230,7 +1257,7 @@ QPushButton:disabled {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>529</y>
+         <y>550</y>
          <width>461</width>
          <height>51</height>
         </rect>
@@ -1242,13 +1269,52 @@ QPushButton:disabled {
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>30</y>
+          <y>20</y>
           <width>431</width>
-          <height>31</height>
+          <height>21</height>
          </rect>
         </property>
         <property name="text">
          <string>Motores</string>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_funcionamiento">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>230</y>
+         <width>461</width>
+         <height>61</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Funcionamiento general</string>
+       </property>
+       <widget class="QPushButton" name="btnComenzar">
+        <property name="geometry">
+         <rect>
+          <x>190</x>
+          <y>20</y>
+          <width>91</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Comenzar</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btnCoger">
+        <property name="geometry">
+         <rect>
+          <x>290</x>
+          <y>20</y>
+          <width>75</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Coger</string>
         </property>
        </widget>
       </widget>
@@ -1261,7 +1327,7 @@ QPushButton:disabled {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>995</width>
+     <width>1011</width>
      <height>26</height>
     </rect>
    </property>

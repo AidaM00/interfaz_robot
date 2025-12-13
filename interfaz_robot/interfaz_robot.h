@@ -80,9 +80,13 @@ private:
     // Parámetros del panel
     cv::Size boardSize=cv::Size(9, 6);     // Esquinas internas
     float m_squareSize = 10.4f;     // mm
-    bool m_capturando;
-    bool m_comenzarProcesado;
-	bool m_cogerPieza;
+    bool m_capturando = false;
+    bool m_comenzarProcesado = false;
+	bool m_cogerPieza = false;
+    bool m_mostrarFrameCongelado = false;
+
+    PuntosProcesados m_ultimosPuntos;
+    cv::Mat m_ultimoFrame;
 
 };
 

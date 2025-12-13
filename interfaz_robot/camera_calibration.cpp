@@ -252,7 +252,13 @@ bool calibrateCameraRobot(
         std::vector<cv::Point2f> corners;
         bool found = cv::findChessboardCorners(gray, boardSize, corners);
         //std::cout << "Bool =\n" << found << std::endl;
-        if (!found) continue;
+        //if (!found) continue;
+        if (!found)
+        {
+            std::cout << "Patrón NO detectado en la imagen: "
+                << imgFile.str() << " (pose " << i << ")\n";
+            continue;
+        }
 
         cv::cornerSubPix(gray, corners, cv::Size(11, 11), cv::Size(-1, -1),
             cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 30, 0.1));

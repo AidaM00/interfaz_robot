@@ -66,7 +66,6 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.btnCalibrarPanel, SIGNAL(clicked()), this, SLOT(CalibrarPanel()));
     connect(ui.btnPoses, SIGNAL(clicked()), this, SLOT(GuardarImagenYPose()));
     connect(ui.btnCalibrarCamaraRobot, SIGNAL(clicked()), this, SLOT(CalibrarCamaraRobot()));
-    connect(ui.btnProcesar, SIGNAL(clicked()), this, SLOT(ProcesarImagen()));
 	connect(ui.btnPosInterm, SIGNAL(clicked()), this, SLOT(MoverPosInterm()));
     connect(ui.btnTrasladarPieza, SIGNAL(clicked()), this, SLOT(TrasladarPieza()));
     connect(ui.btnMoverPosicion, SIGNAL(clicked()), this, SLOT(MoverACota()));
@@ -109,6 +108,7 @@ void interfaz_robot::HabilitarBotones(bool habilitar)
     ui.btnGuardar->setEnabled(habilitar);
     ui.btnMover1 -> setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
+    // FALTA METER TODOS LOS BOTONES!!!!!
 }
 
 void interfaz_robot::startStopCapture(bool capturando)
@@ -129,42 +129,74 @@ void interfaz_robot::startStopCapture(bool capturando)
     }
 }
 
+
 void interfaz_robot::getNewFrame()
 {
-    if (m_capturando)
+    if (!m_capturando)
+        return;
+
+    // Si estamos mostrando frame congelado
+    if (m_mostrarFrameCongelado)
     {
-        //cv::Mat frame = camara->getImage();
-		MostrarVideo();
-        if (m_comenzarProcesado)
+        // Mostrar SIEMPRE el mismo frame
+        MostrarFrame(m_ultimoFrame, m_ultimosPuntos.centro, m_ultimosPuntos.lejano);
+        QTimer::singleShot(30, this, SLOT(getNewFrame()));
+        return;
+    }
+
+    // Modo vídeo normal
+    MostrarVideo();
+
+    if (m_comenzarProcesado)
+    {
+        cv::Mat frame = camara->getImage();
+
+        PuntosProcesados pts = ComenzarProcesado(frame);
+
+        m_ultimoFrame = frame.clone();
+        m_ultimosPuntos = pts;
+
+        if (m_cogerPieza)
         {
-			cv::Point2f centro, lejano;
-            cv::Mat frame = camara->getImage();
-            PuntosProcesados pts = ComenzarProcesado(frame);
-            MostrarFrame(frame, pts.centro, pts.lejano);
-			m_comenzarProcesado = false;
-            if (m_cogerPieza)
-            {
-                //DECIRLE QUE IMAGEN COGER PARA IR A BUSCARLO
-                Mat K = leerMatriz("K.txt");
-                Mat RTpc = leerMatriz("RT_panel_camara.txt");
-                Mat RTcr = leerMatriz("RT_camara_base.txt");
+            // Dibujar solo una vez
+            cv::circle(m_ultimoFrame, cv::Point(m_ultimosPuntos.centro.x, m_ultimosPuntos.centro.y), 6, cv::Scalar(0, 0, 255), -1);
+            cv::circle(m_ultimoFrame, cv::Point(m_ultimosPuntos.lejano.x, m_ultimosPuntos.lejano.y), 6, cv::Scalar(255, 0, 0), -1);
 
-                cv::Point3d centro_baseRobot = pixelToWorld3D(centro, K, RTpc, RTcr); //Mat& RTpanelCam, Mat& RTcamRobot
-                cv::Point3d lejano_baseRobot = pixelToWorld3D(lejano, K, RTpc, RTcr);
+            cv::imwrite("pieza_final.png", m_ultimoFrame);
 
-                float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y,
-                    lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;
+            // Cálculos robóticos 
+            Mat K = leerMatriz("K.txt");
+            Mat RTpc = leerMatriz("RT_panel_camara.txt");
+            Mat RTcr = leerMatriz("RT_camara_base.txt");
 
-                CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-                TrasladarPieza();
-				m_cogerPieza = false;
-            }
-            
+            /*cv::Point3d centro_baseRobot =
+                pixelToWorld3D(m_ultimosPuntos.centro, K, RTpc, RTcr);
+
+            cv::Point3d lejano_baseRobot =
+                pixelToWorld3D(m_ultimosPuntos.lejano, K, RTpc, RTcr);
+
+            float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;*/
+
+			// Centro del panel en coordenadas del robot (prueba)
+            cv::Point3d centro_baseRobot(17, 0, 5);
+			cv::Point3d lejano_baseRobot(18, 0, 5);
+            float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;
+            std::cout << "Centro en: " << centro_baseRobot << std::endl;
+            std::cout << "Lejano en: " << lejano_baseRobot << std::endl; 
+            std::cout << "Angulo: " << angulo << std::endl;
+
+            CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+
+            // Pasar a modo frame congelado
+            m_mostrarFrameCongelado = true;
+            m_cogerPieza = false;
+            m_comenzarProcesado = false;
         }
+    }
 
-		QTimer::singleShot(30, this, SLOT(getNewFrame())); // Llama a sí misma cada 30 ms
-    }    
+    QTimer::singleShot(30, this, SLOT(getNewFrame()));
 }
+
 
 void interfaz_robot::MostrarVideo()
 {
@@ -174,9 +206,6 @@ void interfaz_robot::MostrarVideo()
         qDebug() << "Frame vacío recibido";
         return;
     }
-
-    //// Guardamos una copia del último frame mostrado
-    //ultimoFrame = frame.clone();
 
     cv::Mat rgbFrame;
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
@@ -199,13 +228,9 @@ void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
         return;
     }
 
-    //// Guardamos una copia del último frame mostrado
-    //ultimoFrame = frame.clone();
-
     cv::Mat rgbFrame;
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
-    //cv::circle(maskColor, cv::Point(centro.x, centro.y), 6, cv::Scalar(0, 0, 255), -1); //CORREGIR
-    //cv::circle();  // MOSTRAR EN LA FOTO LOS DOS CIRCULITOS DEL CENTRO Y EL PTO LEJANO  
+     
     QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
     ui.lblInicio->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -221,6 +246,7 @@ void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
 void interfaz_robot::onComenzar()
 {
     m_comenzarProcesado = true;
+    m_mostrarFrameCongelado = false;
 }
 
 void interfaz_robot::onCoger()
@@ -312,8 +338,8 @@ void interfaz_robot::MoverEje(int indexEje, int grados)
         qDebug() << "Moviendo eje" << indexEje << "a" << grados << "grados.";
         q[indexEje] = grados;
         m_robot->mover(indexEje, grados);
-        QMessageBox::information(this, "Movimiento",
-            QString("Eje %1 movido a %2 grados").arg(indexEje).arg(grados));
+        /*QMessageBox::information(this, "Movimiento",
+            QString("Eje %1 movido a %2 grados").arg(indexEje).arg(grados));*/
         // Actualizar información de los motores en la interfaz
         ActualizarInterfaz();
     }
@@ -364,8 +390,8 @@ void interfaz_robot::MoverTodosLosEjes(int *angulos)
     if (m_robot)
         m_robot->enviarComando(comando);
     qDebug() << "Comando enviado al robot:" << comando;
-    QMessageBox::information(this, "Movimiento",
-        "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");
+   /* QMessageBox::information(this, "Movimiento",
+        "Todos los ejes se están moviendo simultáneamente a las nuevas posiciones.");*/
 
     for (int i = 0; i < 6; i++)
         q[i] = angulos[i];
@@ -659,7 +685,7 @@ void interfaz_robot::CalibrarCamaraRobot()
 PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
 {
     // Recortar y reescalar
-    cv::Mat procesada = recortarYReescalar(img);
+    Mat procesada = recortarYReescalar(img);
 
     // Localizar pieza y guardar imagen 
     cv::Point2f centro(0, 0);
@@ -670,7 +696,7 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     Mat K = leerMatriz("K.txt");
     Mat RTpc = leerMatriz("RT_panel_camara.txt");
     Mat RTcr = leerMatriz("RT_camara_base.txt");
-    cv::Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
+    Mat distCoeffs = interfaz_robot::leerMatriz("Kc.txt");
 
     // Quitar distorsión
     std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
@@ -681,50 +707,11 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     cv::undistortPoints(srcPoints2, undistortedPoints_lejano, K, distCoeffs, cv::noArray(), K);
     cv::Point2d lejano_sin_distorsion = undistortedPoints_lejano[0];
 
+    std::cout << "Centro sin dist" << centro_sin_distorsion << ", Lejano sin disr: " << lejano_sin_distorsion << std::endl;
+
     return { centro_sin_distorsion, lejano_sin_distorsion };
 }
 
-
-
-//cv::Mat interfaz_robot::ProcesarImagen() {
-//    if (!camara) {
-//        return cv::Mat();
-//    }
-//
-//    std::cout << "Procesamiento en tiempo real iniciado\n";
-//
-//    cv::Mat frame, procesada, salida;
-//
-//    while (true) {
-//        frame = camara->getImage();
-//        if (frame.empty()) {
-//            std::cerr << "Frame vacío recibido.\n";
-//            continue;
-//        }
-//
-//        // Recortar y reescalar el frame actual
-//        procesada = recortarYReescalar(frame);
-//        cv::imshow("Procesada", procesada);
-//        if (procesada.empty()) {
-//            std::cerr << "Error al recortar y reescalar.\n";
-//            continue;
-//        }
-//
-//        // Procesar la imagen en tiempo real
-//        salida = Segmentacion(procesada);
-//
-//        // Mostrar el resultado segmentado (con centroide y ángulo dibujados)
-//        cv::imshow("Vista segmentada", salida);
-//
-//        // Pequeña espera para refrescar ventana (33 ms, 30 FPS)
-//        char c = static_cast<char>(cv::waitKey(33));
-//        if (c == 'q' || c == 27)
-//            break;
-//    }
-//
-//    cv::destroyAllWindows();
-//    return salida;
-//}
 
 cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya tiene que ser sin distorsión
     const cv::Mat& K,             
@@ -874,8 +861,8 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
     qDebug() << "q5 =" << q[4] << "°";
     qDebug() << "q6 =" << q[5] << "°";
 
-    MoverRobotActual();
-    AbrirCerrarPinza(1); // Cerrar pinza
+    //MoverRobotActual();
+    //AbrirCerrarPinza(1); // Cerrar pinza
 
 }
 
@@ -937,6 +924,7 @@ void interfaz_robot::MoverACota()
         ui.spinZ->value()
     };
     double angulo = ui.spinA->value();
+
     CinematicaInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
-    TrasladarPieza();
+    //TrasladarPieza();
 }
