@@ -214,7 +214,7 @@ cv::Mat fkBraccio(const double q_deg[6])
         RotY(q4) * Trans(0, 0, L4) *
         RotZ(q5) * Trans(0, 0, L5);
 
-    return (RT_gripperBase.inv());
+    return (RT_gripperBase.inv()); // devuelve RT base gripper
 }
 
 bool calibrateCameraRobot(

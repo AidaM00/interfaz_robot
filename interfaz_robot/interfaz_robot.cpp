@@ -152,6 +152,7 @@ void interfaz_robot::getNewFrame()
 
         m_ultimoFrame = frame.clone();
         m_ultimosPuntos = pts;
+        std::cout << "Ult ptos: " << pts.centro << "y" << pts.lejano << std::endl;
 
         if (m_cogerPieza)
         {
@@ -161,23 +162,23 @@ void interfaz_robot::getNewFrame()
 
             cv::imwrite("pieza_final.png", m_ultimoFrame);
 
-            /*cv::Point3d centro_baseRobot =
+			// Centro del panel en coordenadas del robot (prueba)
+            //cv::Point3d centro_baseRobot(170, 0, 0);
+			//cv::Point3d lejano_baseRobot(172, 0, 1);
+            //pts.centro = { 1019, 408 };
+            //pts.lejano = { 1019, 444.469 };
+            cv::Point3d centro_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.centro, m_K, m_RTpc, m_RTcr);
-
             cv::Point3d lejano_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.lejano, m_K, m_RTpc, m_RTcr);
-
-            float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;*/
-
-			// Centro del panel en coordenadas del robot (prueba)
-            cv::Point3d centro_baseRobot(17, 0, 5);
-			cv::Point3d lejano_baseRobot(18, 0, 5);
             float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;
+            
             std::cout << "Centro en: " << centro_baseRobot << std::endl;
             std::cout << "Lejano en: " << lejano_baseRobot << std::endl; 
             std::cout << "Angulo: " << angulo << std::endl;
 
             CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+            //TrasladarPieza();
 
             // Pasar a modo frame congelado
             m_mostrarFrameCongelado = true;
@@ -266,7 +267,7 @@ void interfaz_robot::CargarMatricesCalibracion()
         qDebug() << "Aviso: RT_camara_base no cargada.";
     }
 
-    qDebug() << "Matrices de calibración cargadas correctamente.";
+    qDebug() << "Matrices de calibracion cargadas correctamente.";
 }
 
 
@@ -378,18 +379,18 @@ void interfaz_robot::MoverTodosLosEjes()
 
 void interfaz_robot::MoverTodosLosEjes(int *angulos)
 {
-    // Verificar que todos los valores estén dentro del rango permitido
-    for (int i = 0; i < 6; ++i)
-    {
-        if (angulos[i] < -90 || angulos[i] > 90)
-        {
-            QMessageBox::warning(this, "Valor fuera de rango",
-                QString("El eje %1 tiene un valor no válido (%2°).\n\n"
-                    "Debe estar entre -90° y +90°.")
-                .arg(i).arg(angulos[i]));
-            return; // Cancelar el envío
-        }
-    }
+    //// Verificar que todos los valores estén dentro del rango permitido
+    //for (int i = 0; i < 6; ++i)
+    //{
+    //    if (angulos[i] < -90 || angulos[i] > 90)
+    //    {
+    //        QMessageBox::warning(this, "Valor fuera de rango",
+    //            QString("El eje %1 tiene un valor no válido (%2°).\n\n"
+    //                "Debe estar entre -90° y +90°.")
+    //            .arg(i).arg(angulos[i]));
+    //        return; // Cancelar el envío
+    //    }
+    //}
 
     // Construir el comando tipo: #a45,0,30,90,-30,60*
     QString comando = "#a";
@@ -647,6 +648,39 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     LocalizarPieza(procesada, centro, lejano);
     std::cout << "Centroide: " << centro << ", Punto lejano: " << lejano << std::endl;
 
+    // Quitar reescalado
+    // Definir los mismos puntos que se usaron en recortarYReescalar
+    std::vector<cv::Point2f> srcPoints = {
+        cv::Point2f(490, 192),    // Superior izquierda
+        cv::Point2f(1343, 205),   // Superior derecha
+        cv::Point2f(304, 988),    // Inferior izquierda
+        cv::Point2f(1505, 983)    // Inferior derecha
+    };
+
+    int anchoNuevo = 1920; // Igual que en recortarYReescalar
+    int altoNuevo = 1080;
+
+    std::vector<cv::Point2f> dstPoints = {
+        cv::Point2f(0, 0),
+        cv::Point2f(anchoNuevo, 0),
+        cv::Point2f(0, altoNuevo),
+        cv::Point2f(anchoNuevo, altoNuevo)
+    };
+
+    // Calcular homografía inversa
+    cv::Mat hInv = cv::getPerspectiveTransform(dstPoints, srcPoints);
+
+    // Transformar los puntos detectados a coordenadas originales
+    std::vector<cv::Point2f> puntosProcesados = { centro, lejano };
+    cv::perspectiveTransform(puntosProcesados, puntosProcesados, hInv);
+
+    // Actualizar los puntos con las coordenadas originales
+    centro = puntosProcesados[0];
+    lejano = puntosProcesados[1];
+
+    std::cout << "Centroide transf: " << centro << ", Punto lejano transf: " << lejano << std::endl;
+
+
     // Quitar distorsión
     std::vector<cv::Point2d> srcPoints1{ centro }, undistortedPoints_centro;
     cv::undistortPoints(srcPoints1, undistortedPoints_centro, m_K, m_D, cv::noArray(), m_K);
@@ -659,6 +693,7 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     std::cout << "Centro sin dist" << centro_sin_distorsion << ". Lejano sin disr: " << lejano_sin_distorsion << std::endl;
 
     return { centro_sin_distorsion, lejano_sin_distorsion };
+    //return { centro, lejano };
 }
 
 
@@ -790,16 +825,57 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
     qDebug() << "q_deseado[4] =" << q_deseado[4] << "°";
     qDebug() << "q_deseado[5] =" << q_deseado[5] << "°";
 
-    //MoverTodosLosEjes(q_deseado);
-    //AbrirCerrarPinza(1); // Cerrar pinza
+    // Redondear los valores al entero menor
+	for (int i = 0; i < 6; i++)
+		q_deseado[i] = floor(q_deseado[i]);
+    // Convertir a int
+	int q_deseado_int[6];
+	for (int i = 0; i < 6; i++)
+		q_deseado_int[i] = static_cast<int>(q_deseado[i]);
+    
+    // Comprobación de límites [0, 90]
+    bool posicion_valida = true;
+    QString mensaje_error;
 
-    // Actualizar los ángulos actuales
     for (int i = 0; i < 6; i++)
-        m_q[i] = q_deseado[i];
+    {
+        if (q_deseado_int[i] < 0 || q_deseado_int[i] > 90)
+        {
+            posicion_valida = false;
+            mensaje_error += QString(
+                "El eje %1 se sale del rango permitido: %2° (rango 0°–90°)\n"
+            ).arg(i + 1).arg(q_deseado_int[i]);
+        }
+    }
 
-    // Actualizar información de los motores en la interfaz
-    ActualizarInterfaz();
+    // Actuar según el resultado
+    if (posicion_valida)
+    {
+        // Mover ejes
+        MoverTodosLosEjes(q_deseado_int);
 
+        // Cerrar pinza
+        AbrirCerrarPinza(1);
+
+        // Actualizar los ángulos actuales
+        for (int i = 0; i < 6; i++)
+            m_q[i] = q_deseado_int[i];
+
+        // Actualizar la interfaz
+        ActualizarInterfaz();
+    }
+    else
+    {
+        // Aviso de error
+        QMessageBox::warning(
+            this,
+            "Posición no alcanzable",
+            "El robot no puede alcanzar la posición solicitada:\n\n" + mensaje_error
+        );
+
+        qDebug() << "Posición no alcanzable:";
+        qDebug().noquote() << mensaje_error;
+    }
 }
 
 void interfaz_robot::TrasladarPieza()
@@ -817,7 +893,7 @@ void interfaz_robot::TrasladarPieza()
 	waitKey(1500); // Esperar 1.5 segundos por si acaso
 
     // 2: Mover a posición de seguridad
-    int angulos[6] = { 90,5 ,70 ,90 ,0, round(q_original[5]) };
+    int angulos[6] = { 90, 5, 70, 90, 0, round(q_original[5]) };
     qDebug() << "2. Girando base a 90 grados: q0 =" << m_q[0];
 	MoverTodosLosEjes(angulos);
     waitKey(1500); // Esperar 1.5 segundos por si acaso
