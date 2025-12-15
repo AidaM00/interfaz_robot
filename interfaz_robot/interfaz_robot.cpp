@@ -839,12 +839,24 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 
     for (int i = 0; i < 6; i++)
     {
-        if (q_deseado_int[i] < 0 || q_deseado_int[i] > 90)
+        int min_ang = 0;
+        int max_ang = 90;
+
+        // Rangos especiales
+        if (i == 0)
+            min_ang = -30;
+        else if (i == 4)
+            min_ang = -60;
+
+        if (q_deseado_int[i] < min_ang || q_deseado_int[i] > max_ang)
         {
             posicion_valida = false;
             mensaje_error += QString(
-                "El eje %1 se sale del rango permitido: %2° (rango 0°–90°)\n"
-            ).arg(i + 1).arg(q_deseado_int[i]);
+                "El eje %1 se sale del rango permitido: %2° (rango %3°–%4°)\n"
+            ).arg(i + 1)
+                .arg(q_deseado_int[i])
+                .arg(min_ang)
+                .arg(max_ang);
         }
     }
 
@@ -852,10 +864,10 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
     if (posicion_valida)
     {
         // Mover ejes
-        MoverTodosLosEjes(q_deseado_int);
+        //MoverTodosLosEjes(q_deseado_int);
 
         // Cerrar pinza
-        AbrirCerrarPinza(1);
+        //AbrirCerrarPinza(1);
 
         // Actualizar los ángulos actuales
         for (int i = 0; i < 6; i++)

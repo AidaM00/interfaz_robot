@@ -844,6 +844,12 @@ QPushButton:disabled {
          <property name="buttonSymbols">
           <enum>QAbstractSpinBox::PlusMinus</enum>
          </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
         </widget>
         <widget class="QSpinBox" name="spinEje5">
          <property name="geometry">
