@@ -167,6 +167,8 @@ void interfaz_robot::getNewFrame()
 			//cv::Point3d lejano_baseRobot(172, 0, 1);
             //pts.centro = { 1019, 408 };
             //pts.lejano = { 1019, 444.469 };
+
+
             cv::Point3d centro_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.centro, m_K, m_RTpc, m_RTcr);
             cv::Point3d lejano_baseRobot =
@@ -177,8 +179,17 @@ void interfaz_robot::getNewFrame()
             std::cout << "Lejano en: " << lejano_baseRobot << std::endl; 
             std::cout << "Angulo: " << angulo << std::endl;
 
-            CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-            //TrasladarPieza();
+            //cv::Point2d pixel_prueba(983, 539);
+
+            //cv::Point3d punto_robot =
+            //    pixelToWorld3D(pixel_prueba, m_K, m_RTpc, m_RTcr);
+
+            //std::cout << "Pixel (983.529, 5390) -> Robot XYZ = "
+            //    << punto_robot << std::endl;
+
+
+           CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+            TrasladarPieza();
 
             // Pasar a modo frame congelado
             m_mostrarFrameCongelado = true;
@@ -695,11 +706,9 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     return { centro_sin_distorsion, lejano_sin_distorsion };
     //return { centro, lejano };
 }
-
-
 cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya tiene que ser sin distorsión
-    const cv::Mat& K,             
-    const cv::Mat& RTpanelCam,   
+    const cv::Mat& K,
+    const cv::Mat& RTpanelCam,
     const cv::Mat& RTcamRobot)
 {
     // Extraer fx, fy, cx, cy
@@ -715,8 +724,8 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya 
 
     // Plano definido por RTpanel-camara
     // P0 y P1 en coordenadas de cámara
-    cv::Mat P0c = (cv::Mat_<double>(4, 1) << 0, 0, 0, 1);  // Origen del plano
-    cv::Mat P1c = (cv::Mat_<double>(4, 1) << 0, 0, 1, 1);  // Punto a 1 unidad en z
+    cv::Mat P0c = (cv::Mat_<double>(4, 1) << 0, 0, 0, 1); // Origen del plano
+    cv::Mat P1c = (cv::Mat_<double>(4, 1) << 0, 0, 1, 1); // Punto a 1 unidad en z
 
     // Transformar puntos al sistema de la cámara
     P0c = RTpanelCam * P0c;
@@ -747,6 +756,8 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya 
 
     return cv::Point3d(Xr, Yr, Zr);
 }
+
+
 
 void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
 {
@@ -818,6 +829,7 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 
     // Mostrar valores
     qDebug() << "Ángulos según la cinematica inversa:";
+    qDebug() << "X =" << cx << " Y =" << cy << " Z =" << cz;
     qDebug() << "q_deseado[0] =" << q_deseado[0] << "°";
     qDebug() << "q_deseado[1] =" << q_deseado[1] << "°";
     qDebug() << "q_deseado[2] =" << q_deseado[2] << "°";
