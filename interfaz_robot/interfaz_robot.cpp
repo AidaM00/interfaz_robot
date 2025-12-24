@@ -298,7 +298,7 @@ void interfaz_robot::CalibrarCamara()
     "calibr_camara_01.png", "calibr_camara_02.png", "calibr_camara_03.png", "calibr_camara_04.png", "calibr_camara_05.png",
     "calibr_camara_06.png", "calibr_camara_07.png", "calibr_camara_08.png", "calibr_camara_09.png", "calibr_camara_10.png",
     "calibr_camara_11.png", "calibr_camara_12.png", "calibr_camara_13.png", "calibr_camara_14.png", "calibr_camara_15.png",
-    "calibr_camara_16.png", "calibr_camara_17.png", "calibr_camara_18.png", "calibr_camara_19.png", "calibr_camara_20.png"
+    "calibr_camara_16.png", "calibr_camara_17.png", "calibr_camara_18.png", "calibr_camara_19.png"
     };
 
     calibrateCameraFromFiles(archivos);  // Llamada a la función
@@ -651,10 +651,10 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     // Quitar reescalado
     // Definir los mismos puntos que se usaron en recortarYReescalar
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(490, 192),    // Superior izquierda
-        cv::Point2f(1343, 205),   // Superior derecha
-        cv::Point2f(304, 988),    // Inferior izquierda
-        cv::Point2f(1505, 983)    // Inferior derecha
+        cv::Point2f(488, 220),    // Superior izquierda
+        cv::Point2f(1342, 233),   // Superior derecha
+        cv::Point2f(298, 1015),    // Inferior izquierda
+        cv::Point2f(1515, 1014)    // Inferior derecha
     };
 
     int anchoNuevo = 1920; // Igual que en recortarYReescalar
