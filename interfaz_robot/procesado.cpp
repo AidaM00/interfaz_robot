@@ -118,6 +118,14 @@ void LocalizarPieza(const cv::Mat& procesada, cv::Point2f &centro, cv::Point2f &
     // 11. Crear imagen binaria final con el contorno principal
     cv::Mat maskFinal = cv::Mat::zeros(morf.size(), CV_8UC1);
     cv::drawContours(maskFinal, contornos, (int)idxMayor, cv::Scalar(255), cv::FILLED);
+    // Guardar la máscara binaria segmentada
+        std::ostringstream nombreArchivo;
+    nombreArchivo << "pieza_segmentada_binaria"
+        << std::setw(3) << std::setfill('0') << contador_guardar
+        << ".png";
+    cv::imwrite(nombreArchivo.str(), maskFinal);
+    contador_guardar++; // Incrementar contador para el próximo guardado
+
 
     // Convertir la máscara binaria a BGR para poder dibujar en color
     cv::Mat maskColor;

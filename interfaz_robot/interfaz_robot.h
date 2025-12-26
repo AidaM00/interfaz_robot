@@ -92,6 +92,9 @@ private:
 
     PuntosProcesados m_ultimosPuntos;
     cv::Mat m_ultimoFrame;
+    int m_q_objetivo[6];
+    bool m_posicion_valida = false;
+
 
 };
 
