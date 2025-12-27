@@ -880,8 +880,7 @@ void interfaz_robot::TrasladarPieza()
     // -------------------------------------------------
     MoverEje(3, 90);          // orientar muñeca
     waitKey(500);
-    AbrirCerrarPinza(0);      // abrir pinza
-    waitKey(5000);
+
 
     //// -------------------------------------------------
     //// 1️⃣.25️⃣ Posición intermedia: eje 2 -20°
@@ -890,7 +889,7 @@ void interfaz_robot::TrasladarPieza()
     //for (int i = 0; i < 6; i++)
     //    intermedia[i] = m_q[i];
 
-    //intermedia[2] = m_q[3] - 20;   // bajar/subir eje 2
+    //intermedia[2] = m_q[2] - 20;   // bajar/subir eje 2
     //intermedia[5] = m_q[5];        // mantener pinza
 
     //MoverTodosLosEjes(intermedia);
@@ -945,8 +944,11 @@ void interfaz_robot::TrasladarPieza()
     // -------------------------------------------------
     // 5️⃣ Ir a posición de depósito
     // -------------------------------------------------
-    int depositar[6] = { 90, 5, 70, 90, 0, m_q[5] };
+    int depositar[6] = { 90, 0, 70, 90, 0, m_q[5] };
     MoverTodosLosEjes(depositar);
+    waitKey(5000);
+    ActualizarInterfaz();
+    MoverEje(1, 10);
     waitKey(5000);
     ActualizarInterfaz();
 
