@@ -101,11 +101,22 @@ void interfaz_robot::iniciarComRobot()
 
 void interfaz_robot::HabilitarBotones(bool habilitar)
 {
+    // Cámara
     ui.btnInicio->setEnabled(habilitar);
+	ui.spinFoco->setEnabled(habilitar);
     ui.btnGuardar->setEnabled(habilitar);
-    ui.btnMover1 -> setEnabled(habilitar);
+    // Robot
+    ui.btnCalibrar->setEnabled(habilitar);
+    ui.btnCalibrarPanel->setEnabled(habilitar);
+	ui.btnCalibrarCamaraRobot->setEnabled(habilitar);
+	ui.btnComenzar->setEnabled(habilitar);
+	ui.btnCoger->setEnabled(habilitar);
+    ui.btnPoses->setEnabled(habilitar);
+    ui.btnPosInterm->setEnabled(habilitar);
+	ui.btnTrasladarPieza->setEnabled(habilitar);
+    ui.btnMover1->setEnabled(habilitar);
     ui.btnMoverTodos->setEnabled(habilitar);
-    // FALTA METER TODOS LOS BOTONES!!!!!
+    ui.btnMoverPosicion->setEnabled(habilitar);
 }
 
 void interfaz_robot::startStopCapture(bool capturando)
