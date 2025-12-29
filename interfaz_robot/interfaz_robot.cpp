@@ -199,8 +199,14 @@ void interfaz_robot::getNewFrame()
                 << punto_robot << std::endl;*/
 
 
-           CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-            TrasladarPieza();
+           //CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+           //TrasladarPieza();
+            std::array<int, 6> q_calculado =
+                CinemInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+            int q_traslado[6];
+            for (int i = 0; i < 6; i++)
+                q_traslado[i] = q_calculado[i];
+            TrasladoPieza(q_traslado);
 
             // Pasar a modo frame congelado
             m_mostrarFrameCongelado = true;
@@ -804,7 +810,6 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 {
     double z = cz;
     double r = sqrt(cx * cx + cy * cy);
-
     double X = z - a1 + a4 + a5;
 
     // q3
@@ -876,6 +881,56 @@ void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double a
 
     qDebug() << "Cinemática inversa calculada correctamente";
 }
+
+
+
+// NUEVA CINEMÁTICA INVERSA (dejo la anterior por si acaso no funciona)
+std::array<int, 6> interfaz_robot::CinemInversa(
+    double cx, double cy, double cz, double angulo)
+{
+    std::array<int, 6> q_resultado = { 0, 0, 0, 0, 0, 0 };
+
+    double z = cz;
+    double r = sqrt(cx * cx + cy * cy);
+    double X = z - a1 + a4 + a5;
+
+    // q3
+    double num_q3 = X * X + r * r - a2 * a2 - a3 * a3;
+    double den_q3 = 2 * a2 * a3;
+    double arg_q3 = num_q3 / den_q3;
+    arg_q3 = std::clamp(arg_q3, -1.0, 1.0);
+    double q3_rad = acos(arg_q3);
+
+    // q2
+    double A = a2 + a3 * cos(q3_rad);
+    double B = a3 * sin(q3_rad);
+    double num_q2 = X * A + B * r;
+    double den_q2 = A * A + B * B;
+    double arg_q2 = num_q2 / den_q2;
+    arg_q2 = std::clamp(arg_q2, -1.0, 1.0);
+    double q2_rad = acos(arg_q2);
+
+    // q4
+    double q4_rad = M_PI - (q2_rad + q3_rad);
+
+    // Convertir a grados
+    double q_deseado[6];
+    q_deseado[0] = atan2(cy, cx) * RAD2DEG;
+    q_deseado[1] = q2_rad * RAD2DEG;
+    q_deseado[2] = q3_rad * RAD2DEG;
+    q_deseado[3] = q4_rad * RAD2DEG;
+    q_deseado[4] = 90;
+    q_deseado[5] = 0;
+
+    for (int i = 0; i < 6; i++)
+        q_resultado[i] = static_cast<int>(std::floor(q_deseado[i]));
+
+    return q_resultado;
+}
+
+
+
+
 void interfaz_robot::TrasladarPieza()
 {
     if (!m_posicion_valida)
@@ -981,6 +1036,93 @@ void interfaz_robot::TrasladarPieza()
     ActualizarInterfaz();
 }
 
+
+
+
+
+void interfaz_robot::TrasladoPieza(int q_destino[6])
+{
+    // Comprobación de límites
+    m_posicion_valida = true;
+    QString mensaje_error;
+
+    for (int i = 0; i < 6; i++)
+    {
+        int min_ang = 0;
+        int max_ang = 90;
+
+        if (i == 0) min_ang = -30;
+        if (i == 4) min_ang = -180;
+
+        if (q_destino[i] < min_ang || q_destino[i] > max_ang)
+        {
+            m_posicion_valida = false;
+            mensaje_error += QString(
+                "Eje %1 fuera de rango: %2° (rango %3°–%4°)\n"
+            ).arg(i + 1).arg(q_destino[i]).arg(min_ang).arg(max_ang);
+        }
+    }
+
+    if (!m_posicion_valida)
+    {
+        QMessageBox::warning(
+            this,
+            "Posición no alcanzable",
+            mensaje_error
+        );
+        return;
+    }
+
+    // 1️ Posición de seguridad inicial (pinza abierta)
+    MoverEje(3, 90);
+    waitKey(500);
+
+    // 2️ Ir a la posición objetivo (IK) con pinza abierta
+    qDebug() << "Moviendo a posición objetivo";
+    MoverTodosLosEjes(q_destino);
+    waitKey(5000);
+    // Actualizar estado interno
+    for (int i = 0; i < 6; i++)
+        m_q[i] = q_destino[i];
+    ActualizarInterfaz();
+
+    // 3️ Cerrar pinza
+    AbrirCerrarPinza(1);
+    waitKey(1200);
+    ActualizarInterfaz();
+
+    // 5️ Ir a posición de depósito
+    int depositar[6] = { 90, 0, 70, 90, 0, m_q[5] };
+    MoverTodosLosEjes(depositar);
+    waitKey(5000);
+    // Actualizar estado
+    for (int i = 0; i < 6; i++)
+        m_q[i] = depositar[i];
+    ActualizarInterfaz();
+    MoverEje(1, 10);
+    waitKey(5000);
+    ActualizarInterfaz();
+
+    // 6️ Soltar pieza
+    AbrirCerrarPinza(0);
+    waitKey(5000);
+    ActualizarInterfaz();
+
+    // 7️ Volver a posición inicial
+    int inicial[6] = { 0, 0, 0, 0, 0, 0 };
+    MoverTodosLosEjes(inicial);
+    waitKey(2000);
+    for (int i = 0; i < 6; i++)
+        m_q[i] = inicial[i];
+    ActualizarInterfaz();
+
+    qDebug() << "Pieza depositada";
+}
+
+
+
+
+
 void interfaz_robot::MoverACota()
 {
     double punto3D[3] = {
@@ -991,8 +1133,14 @@ void interfaz_robot::MoverACota()
 
     double angulo = ui.spinA->value();
 
-    CinematicaInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
-    TrasladarPieza();
+    //CinematicaInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
+    //TrasladarPieza();
+    std::array<int, 6> q_calculado =
+        CinemInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
+	int q_traslado[6];
+    for (int i = 0; i < 6; i++)
+        q_traslado[i] = q_calculado[i];
+    TrasladoPieza(q_traslado);
 }
 
 

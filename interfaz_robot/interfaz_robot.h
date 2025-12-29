@@ -56,6 +56,9 @@ private slots:
     void onComenzar();
     void onCoger();
     void CargarMatricesCalibracion();
+    std::array<int, 6> CinemInversa(
+        double cx, double cy, double cz, double angulo);
+    void TrasladoPieza(int q_destino[6]);
 
 private:
     Ui::interfaz_robotClass ui;
