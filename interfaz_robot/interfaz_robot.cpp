@@ -173,9 +173,9 @@ void interfaz_robot::getNewFrame()
 
             cv::imwrite("pieza_final.png", m_ultimoFrame);
 
-			// Centro del panel en coordenadas del robot (prueba)
+            // Centro del panel en coordenadas del robot (prueba)
             //cv::Point3d centro_baseRobot(170, 0, 0);
-			//cv::Point3d lejano_baseRobot(172, 0, 1);
+            //cv::Point3d lejano_baseRobot(172, 0, 1);
             //pts.centro = { 1019, 408 };
             //pts.lejano = { 1019, 444.469 };
 
@@ -184,23 +184,23 @@ void interfaz_robot::getNewFrame()
                 pixelToWorld3D(m_ultimosPuntos.centro, m_K, m_RTpc, m_RTcr);
             cv::Point3d lejano_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.lejano, m_K, m_RTpc, m_RTcr);
-            float angulo = atan2(lejano_baseRobot.y - centro_baseRobot.y, lejano_baseRobot.x - centro_baseRobot.x) * 180.0 / M_PI;
-            
+            float angulo = atan2(centro_baseRobot.y- lejano_baseRobot.y,  centro_baseRobot.x - lejano_baseRobot.x  ) * 180.0 / M_PI;
+
             std::cout << "Centro en: " << centro_baseRobot << std::endl;
-            std::cout << "Lejano en: " << lejano_baseRobot << std::endl; 
+            std::cout << "Lejano en: " << lejano_baseRobot << std::endl;
             std::cout << "Angulo: " << angulo << std::endl;
 
-            /*cv::Point2d pixel_prueba(983, 539);
+            cv::Point2d pixel_prueba(896, 489);
 
             cv::Point3d punto_robot =
                 pixelToWorld3D(pixel_prueba, m_K, m_RTpc, m_RTcr);
 
-            std::cout << "Pixel (983.529, 539.0) -> Robot XYZ = "
-                << punto_robot << std::endl;*/
+            std::cout << "Pixel (896, 489) -> Robot XYZ = "
+                << punto_robot << std::endl;
 
 
-           //CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
-           //TrasladarPieza();
+                //CinematicaInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
+                //TrasladarPieza();
             std::array<int, 6> q_calculado =
                 CinemInversa(centro_baseRobot.x, centro_baseRobot.y, centro_baseRobot.z, angulo);
             int q_traslado[6];
@@ -217,6 +217,8 @@ void interfaz_robot::getNewFrame()
 
     QTimer::singleShot(30, this, SLOT(getNewFrame()));
 }
+
+
 
 void interfaz_robot::MostrarVideo()
 {
@@ -250,7 +252,7 @@ void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
 
     cv::Mat rgbFrame;
     cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
-     
+
     QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
 
     ui.lblInicio->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
@@ -262,6 +264,8 @@ void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
         )
     );
 }
+
+
 
 void interfaz_robot::onComenzar()
 {
@@ -679,10 +683,10 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     // Quitar reescalado
     // Definir los mismos puntos que se usaron en recortarYReescalar
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(488, 220),    // Superior izquierda
-        cv::Point2f(1342, 233),   // Superior derecha
-        cv::Point2f(298, 1015),    // Inferior izquierda
-        cv::Point2f(1515, 1014)    // Inferior derecha
+        cv::Point2f(458, 256),    // Superior izquierda
+        cv::Point2f(1311, 273),   // Superior derecha
+        cv::Point2f(256, 1057),    // Inferior izquierda
+        cv::Point2f(1479, 1046)   // Inferior derecha
     };
 
     int anchoNuevo = 1920; // Igual que en recortarYReescalar
@@ -766,9 +770,9 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya 
     cv::Vec4d P(Ix, Iy, Iz, 1.0);
     cv::Vec4d P_robot = RT * P;
 
-    // Extraer
-    double Xr = 319.95-P_robot[0];
-    double Yr = P_robot[1] + 15;// aplicar una cierta correccion por las holguras para que vaya mas al centro de la pieza
+    // Extraer punto, tener en cuenta problemas de holguras
+    double Xr = 319-P_robot[0];
+    double Yr = P_robot[1]+20;// aplicar una cierta correccion por las holguras para que vaya mas al centro de la pieza
     double Zr = P_robot[2];
 
     return cv::Point3d(Xr, Yr, Zr);
@@ -806,85 +810,7 @@ void interfaz_robot::AbrirCerrarPinza(int accion)    // 0 = abrir, 1 = cerrar
     ActualizarInterfaz();
 }
 
-void interfaz_robot::CinematicaInversa(double cx, double cy, double cz, double angulo)
-{
-    double z = cz;
-    double r = sqrt(cx * cx + cy * cy);
-    double X = z - a1 + a4 + a5;
-
-    // q3
-    double num_q3 = X * X + r * r - a2 * a2 - a3 * a3;
-    double den_q3 = 2 * a2 * a3;
-    double arg_q3 = num_q3 / den_q3;
-    arg_q3 = std::clamp(arg_q3, -1.0, 1.0);
-    double q3_rad = acos(arg_q3);
-
-    // q2
-    double A = a2 + a3 * cos(q3_rad);
-    double B = a3 * sin(q3_rad);
-    double num_q2 = X * A + B * r;
-    double den_q2 = A * A + B * B;
-    double arg_q2 = num_q2 / den_q2;
-    arg_q2 = std::clamp(arg_q2, -1.0, 1.0);
-    double q2_rad = acos(arg_q2);
-
-    // q4
-    double q4_rad = M_PI - (q2_rad + q3_rad);
-
-    // Convertir a grados
-    double q_deseado[6];
-    q_deseado[0] = atan2(cy, cx) * RAD2DEG;
-    q_deseado[1] = q2_rad * RAD2DEG;
-    q_deseado[2] = q3_rad * RAD2DEG;
-    q_deseado[3] = q4_rad * RAD2DEG;
-    q_deseado[4] = 90;
-    q_deseado[5] = 0;
-
-    int q_int[6];
-    for (int i = 0; i < 6; i++)
-        q_int[i] = static_cast<int>(floor(q_deseado[i]));
-
-    // Comprobación de límites
-    m_posicion_valida = true;
-    QString mensaje_error;
-
-    for (int i = 0; i < 6; i++)
-    {
-        int min_ang = 0;
-        int max_ang = 90;
-
-        if (i == 0) min_ang = -30;
-        if (i == 4) min_ang = -180;
-
-        if (q_int[i] < min_ang || q_int[i] > max_ang)
-        {
-            m_posicion_valida = false;
-            mensaje_error += QString(
-                "Eje %1 fuera de rango: %2° (rango %3°–%4°)\n"
-            ).arg(i + 1).arg(q_int[i]).arg(min_ang).arg(max_ang);
-        }
-    }
-
-    if (!m_posicion_valida)
-    {
-        QMessageBox::warning(
-            this,
-            "Posición no alcanzable",
-            mensaje_error
-        );
-        return;
-    }
-
-    // Guardar resultado (NO mover)
-    for (int i = 0; i < 6; i++)
-        m_q_objetivo[i] = q_int[i];
-
-    qDebug() << "Cinemática inversa calculada correctamente";
-}
-
-
-
-// NUEVA CINEMÁTICA INVERSA (dejo la anterior por si acaso no funciona)
+//  CINEMÁTICA INVERSA 
 std::array<int, 6> interfaz_robot::CinemInversa(
     double cx, double cy, double cz, double angulo)
 {
@@ -910,7 +836,7 @@ std::array<int, 6> interfaz_robot::CinemInversa(
     arg_q2 = std::clamp(arg_q2, -1.0, 1.0);
     double q2_rad = acos(arg_q2);
 
-    // q4
+    // q4 (muñeca)
     double q4_rad = M_PI - (q2_rad + q3_rad);
 
     // Convertir a grados
@@ -919,7 +845,7 @@ std::array<int, 6> interfaz_robot::CinemInversa(
     q_deseado[1] = q2_rad * RAD2DEG;
     q_deseado[2] = q3_rad * RAD2DEG;
     q_deseado[3] = q4_rad * RAD2DEG;
-    q_deseado[4] = 90;
+    q_deseado[4] = angulo;
     q_deseado[5] = 0;
 
     for (int i = 0; i < 6; i++)
@@ -927,118 +853,6 @@ std::array<int, 6> interfaz_robot::CinemInversa(
 
     return q_resultado;
 }
-
-
-
-
-void interfaz_robot::TrasladarPieza()
-{
-    if (!m_posicion_valida)
-    {
-        qDebug() << "No hay posición válida calculada";
-        return;
-    }
-
-    qDebug() << "Inicio de traslado de pieza";
-
-    // -------------------------------------------------
-    // 1️⃣ Posición de seguridad inicial (pinza abierta)
-    // -------------------------------------------------
-    MoverEje(3, 90);          // orientar muñeca
-    waitKey(500);
-
-
-    //// -------------------------------------------------
-    //// 1️⃣.25️⃣ Posición intermedia: eje 2 -20°
-    //// -------------------------------------------------
-    //int intermedia[6];
-    //for (int i = 0; i < 6; i++)
-    //    intermedia[i] = m_q[i];
-
-    //intermedia[2] = m_q[2] - 20;   // bajar/subir eje 2
-    //intermedia[5] = m_q[5];        // mantener pinza
-
-    //MoverTodosLosEjes(intermedia);
-    //waitKey(5000);
-
-    //for (int i = 0; i < 6; i++)
-    //    m_q[i] = intermedia[i];
-
-    //ActualizarInterfaz();
-
-
-
-
-    // -------------------------------------------------
-    // 2️⃣ Ir a la posición objetivo (IK) con pinza abierta
-    // -------------------------------------------------
-    qDebug() << "Moviendo a posición objetivo";
-
-    MoverTodosLosEjes(m_q_objetivo);
-    waitKey(5000);
-
-    for (int i = 0; i < 6; i++)
-        m_q[i] = m_q_objetivo[i];
-
-    ActualizarInterfaz();
-
-    // -------------------------------------------------
-    // 3️⃣ Cerrar pinza (coger pieza)
-    // -------------------------------------------------
-    AbrirCerrarPinza(1);
-    waitKey(1200);
-    ActualizarInterfaz();
-
-    //// -------------------------------------------------
-    //// 4️⃣ Subir eje 2 +20° (con pieza cogida)
-    //// -------------------------------------------------
-    //int intermedia2[6];
-    //for (int i = 0; i < 6; i++)
-    //    intermedia2[i] = m_q[i];
-
-    //intermedia2[2] = m_q[3] + 20;  // levantar pieza
-    //intermedia2[5] = m_q[5];       // pinza cerrada
-
-    //MoverTodosLosEjes(intermedia2);
-    //waitKey(5000);
-
-    //for (int i = 0; i < 6; i++)
-    //    m_q[i] = intermedia2[i];
-
-    //ActualizarInterfaz();
-
-    // -------------------------------------------------
-    // 5️⃣ Ir a posición de depósito
-    // -------------------------------------------------
-    int depositar[6] = { 90, 0, 70, 90, 0, m_q[5] };
-    MoverTodosLosEjes(depositar);
-    waitKey(5000);
-    ActualizarInterfaz();
-    MoverEje(1, 10);
-    waitKey(5000);
-    ActualizarInterfaz();
-
-    // -------------------------------------------------
-    // 6️⃣ Soltar pieza
-    // -------------------------------------------------
-    AbrirCerrarPinza(0);
-    waitKey(5000);
-    ActualizarInterfaz();
-
-    // -------------------------------------------------
-    // 7️⃣ Volver a posición inicial
-    // -------------------------------------------------
-    int inicial[6] = { 0, 0, 0, 0, 0, 0 };
-    MoverTodosLosEjes(inicial);
-    waitKey(2000);
-
-    qDebug() << "Pieza depositada";
-    ActualizarInterfaz();
-}
-
-
-
-
 
 void interfaz_robot::TrasladoPieza(int q_destino[6])
 {
@@ -1076,6 +890,7 @@ void interfaz_robot::TrasladoPieza(int q_destino[6])
     // 1️ Posición de seguridad inicial (pinza abierta)
     MoverEje(3, 90);
     waitKey(500);
+
 
     // 2️ Ir a la posición objetivo (IK) con pinza abierta
     qDebug() << "Moviendo a posición objetivo";
@@ -1119,10 +934,6 @@ void interfaz_robot::TrasladoPieza(int q_destino[6])
     qDebug() << "Pieza depositada";
 }
 
-
-
-
-
 void interfaz_robot::MoverACota()
 {
     double punto3D[3] = {
@@ -1132,9 +943,6 @@ void interfaz_robot::MoverACota()
     };
 
     double angulo = ui.spinA->value();
-
-    //CinematicaInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
-    //TrasladarPieza();
     std::array<int, 6> q_calculado =
         CinemInversa(punto3D[0], punto3D[1], punto3D[2], angulo);
 	int q_traslado[6];

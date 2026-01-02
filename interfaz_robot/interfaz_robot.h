@@ -45,9 +45,7 @@ private slots:
 	void CalibrarPanel();
 	void GuardarImagenYPose();
 	void CalibrarCamaraRobot();
-    void CinematicaInversa(double cx, double cy, double cz, double angulo);
     void AbrirCerrarPinza(int accion);
-    void TrasladarPieza();
     void MoverACota();
     void MoverEje(int indexEje, int grados);
     void MoverTodosLosEjes(int* angulos);
