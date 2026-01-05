@@ -184,7 +184,11 @@ void interfaz_robot::getNewFrame()
                 pixelToWorld3D(m_ultimosPuntos.centro, m_K, m_RTpc, m_RTcr);
             cv::Point3d lejano_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.lejano, m_K, m_RTpc, m_RTcr);
-            float angulo = atan2(centro_baseRobot.y- lejano_baseRobot.y,  centro_baseRobot.x - lejano_baseRobot.x  ) * 180.0 / M_PI;
+            float angulo = atan2(
+                lejano_baseRobot.y - centro_baseRobot.y,
+                lejano_baseRobot.x - centro_baseRobot.x
+            ) * 180.0 / M_PI;
+
 
             std::cout << "Centro en: " << centro_baseRobot << std::endl;
             std::cout << "Lejano en: " << lejano_baseRobot << std::endl;
@@ -845,7 +849,8 @@ std::array<int, 6> interfaz_robot::CinemInversa(
     q_deseado[1] = q2_rad * RAD2DEG;
     q_deseado[2] = q3_rad * RAD2DEG;
     q_deseado[3] = q4_rad * RAD2DEG;
-    q_deseado[4] = angulo;
+    q_deseado[4] =angulo - q_deseado[0];
+
     q_deseado[5] = 0;
 
     for (int i = 0; i < 6; i++)
