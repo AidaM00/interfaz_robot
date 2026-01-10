@@ -11,10 +11,10 @@ using namespace std;
 cv::Mat recortarYReescalar(const cv::Mat& imagenOriginal) {
     // Puntos de la imagen original que queremos mapear
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(458, 256),    // Superior izquierda
-        cv::Point2f(1311, 273),   // Superior derecha
-        cv::Point2f(256, 1057),    // Inferior izquierda
-        cv::Point2f(1479, 1046)    // Inferior derecha
+        cv::Point2f(468, 252),    // Superior izquierda
+        cv::Point2f(1318, 267),   // Superior derecha
+        cv::Point2f(271, 1048),    // Inferior izquierda
+        cv::Point2f(1487, 1044)    // Inferior derecha
     };
 
     // Puntos destino (esquinas de la nueva imagen)

@@ -185,8 +185,8 @@ void interfaz_robot::getNewFrame()
             cv::Point3d lejano_baseRobot =
                 pixelToWorld3D(m_ultimosPuntos.lejano, m_K, m_RTpc, m_RTcr);
             float angulo = atan2(
-                lejano_baseRobot.y - centro_baseRobot.y,
-                lejano_baseRobot.x - centro_baseRobot.x
+                lejano_baseRobot.x - centro_baseRobot.x,
+                lejano_baseRobot.y - centro_baseRobot.y
             ) * 180.0 / M_PI;
 
 
@@ -687,10 +687,10 @@ PuntosProcesados interfaz_robot::ComenzarProcesado(Mat img)
     // Quitar reescalado
     // Definir los mismos puntos que se usaron en recortarYReescalar
     std::vector<cv::Point2f> srcPoints = {
-        cv::Point2f(458, 256),    // Superior izquierda
-        cv::Point2f(1311, 273),   // Superior derecha
-        cv::Point2f(256, 1057),    // Inferior izquierda
-        cv::Point2f(1479, 1046)   // Inferior derecha
+        cv::Point2f(468, 252),    // Superior izquierda
+        cv::Point2f(1318, 267),   // Superior derecha
+        cv::Point2f(271, 1048),    // Inferior izquierda
+        cv::Point2f(1487, 1044)   // Inferior derecha
     };
 
     int anchoNuevo = 1920; // Igual que en recortarYReescalar
@@ -849,8 +849,12 @@ std::array<int, 6> interfaz_robot::CinemInversa(
     q_deseado[1] = q2_rad * RAD2DEG;
     q_deseado[2] = q3_rad * RAD2DEG;
     q_deseado[3] = q4_rad * RAD2DEG;
-    q_deseado[4] =angulo - q_deseado[0];
-
+    q_deseado[4] = angulo - q_deseado[0];
+    std::cout << "Angulo q_deseado[0]: " << q_deseado[0] << std::endl;
+    std::cout << "Angulo q_deseado[1]: " << q_deseado[1] << std::endl;
+    std::cout << "Angulo q_deseado[2]: " << q_deseado[2] << std::endl;
+    std::cout << "Angulo q_deseado[3]: " << q_deseado[3] << std::endl;
+    std::cout << "Angulo q_deseado[4]: " << q_deseado[4] << std::endl;
     q_deseado[5] = 0;
 
     for (int i = 0; i < 6; i++)
