@@ -776,7 +776,7 @@ cv::Point3d interfaz_robot::pixelToWorld3D(const cv::Point2d& uv, // Esto uv ya 
 
     // Extraer punto, tener en cuenta problemas de holguras
     double Xr = 320-P_robot[0];
-    double Yr = P_robot[1]+10;// aplicar una cierta correccion por las holguras para que vaya mas al centro de la pieza
+    double Yr = P_robot[1]; 
     double Zr = P_robot[2];
 
     return cv::Point3d(Xr, Yr, Zr);
