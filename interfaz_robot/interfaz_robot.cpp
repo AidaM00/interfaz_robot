@@ -25,7 +25,7 @@
 interfaz_robot::interfaz_robot(QWidget *parent)
     : QMainWindow(parent)
 {
-    //////////////////////////////////////////////////////////////
+   
     double a[6];
     a[0] = 90;
     a[1] = 0;
@@ -38,11 +38,10 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     const double L3 = 125;
     const double L4 = 60;
     const double L5 = 132;
-
+	//prueba para verificar cinematica directa
     cv:Mat m = fkBraccio(a);
     escribirMatriz("basura.txt",m);
 
-    //////////////////////////////////////////////////////////////
     cv::utils::logging::setLogLevel(cv::utils::logging::LOG_LEVEL_SILENT);
     ui.setupUi(this);
 
@@ -78,7 +77,7 @@ interfaz_robot::interfaz_robot(QWidget *parent)
     connect(ui.spinEje4, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
     connect(ui.spinEje5, qOverload<int>(&QSpinBox::valueChanged), this, &interfaz_robot::VerificarRango);
 
-    // Crear el temporizador para mostrar vídeo en vivo
+    // Crear el temporizador para mostrar vídeo en directo
     timerVideo = new QTimer(this);
     connect(timerVideo, &QTimer::timeout, this, &interfaz_robot::MostrarVideo);
 
@@ -124,7 +123,7 @@ void interfaz_robot::startStopCapture(bool capturando)
     if (capturando) {
 		m_capturando = true;
         getNewFrame();
-        //camara->startStopCapture(true);  // Iniciar cámara
+        //camara->startStopCapture(true);  // Iniciar cámara cuando queramos ver centroide en directo
         //timerVideo->start(33);           // Actualizar cada 33 ms (unos 30 FPS)
 
         //ui.btnInicio->setText("Detener");
@@ -222,6 +221,43 @@ void interfaz_robot::getNewFrame()
     QTimer::singleShot(30, this, SLOT(getNewFrame()));
 }
 
+// Si queremos ver el centroide en directo sustituir por esta función
+//void interfaz_robot::getNewFrame()
+//{
+//    if (!m_capturando)
+//        return;
+//
+//    // Obtener frame de la cámara
+//    cv::Mat frame = camara->getImage();
+//    if (frame.empty()) {
+//        qDebug() << "Frame vacío recibido";
+//        QTimer::singleShot(30, this, SLOT(getNewFrame()));
+//        return;
+//    }
+//
+//    // Procesamiento en tiempo real
+//    PuntosProcesados pts = ComenzarProcesado(frame);
+//    m_ultimosPuntos = pts;
+//
+//    // Crear imagen segmentada/annotada
+//    cv::Mat frameProcesado = frame.clone();
+//
+//    // Dibujar el centro y el punto lejano
+//    cv::circle(frameProcesado, cv::Point(pts.centro.x, pts.centro.y), 6, cv::Scalar(0, 0, 255), -1);
+//    cv::circle(frameProcesado, cv::Point(pts.lejano.x, pts.lejano.y), 6, cv::Scalar(255, 0, 0), -1);
+//
+//    // Aquí podrías añadir filtros o segmentación adicional si tienes
+//    // por ejemplo: frameProcesado = segmentar(frame);
+//
+//    // Mostrar la imagen procesada en la interfaz
+//    MostrarFrame(frameProcesado, pts.centro, pts.lejano);
+//
+//    // Guardar última imagen procesada
+//    m_ultimoFrame = frameProcesado.clone();
+//
+//    // Llamada recursiva para el siguiente frame
+//    QTimer::singleShot(30, this, SLOT(getNewFrame()));
+//}
 
 
 void interfaz_robot::MostrarVideo()
@@ -269,6 +305,29 @@ void interfaz_robot::MostrarFrame(cv::Mat frame, Point2f centro, Point2f lejano)
     );
 }
 
+// Si queremos ver el centroide en directo sustituir por esta función
+//void interfaz_robot::MostrarFrame(cv::Mat frame, cv::Point2f centro, cv::Point2f lejano)
+//{
+//    if (frame.empty()) {
+//        qDebug() << "Frame vacío recibido";
+//        return;
+//    }
+//
+//    // Convertir BGR a RGB para mostrar en Qt
+//    cv::Mat rgbFrame;
+//    cv::cvtColor(frame, rgbFrame, cv::COLOR_BGR2RGB);
+//
+//    QImage img((uchar*)rgbFrame.data, rgbFrame.cols, rgbFrame.rows, rgbFrame.step, QImage::Format_RGB888);
+//
+//    ui.lblInicio->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
+//    ui.lblInicio->setPixmap(
+//        QPixmap::fromImage(img).scaled(
+//            ui.lblInicio->size(),
+//            Qt::KeepAspectRatio,
+//            Qt::SmoothTransformation
+//        )
+//    );
+//}
 
 
 void interfaz_robot::onComenzar()
@@ -329,7 +388,7 @@ void interfaz_robot::GuardarImagen()
 
 void interfaz_robot::CalibrarCamara()
 {
-    // Lista de archivos de calibración
+	// Lista de archivos de calibración que se han guardado en la carpeta del proyecto
     std::vector<std::string> archivos = {
     "calibr_camara_01.png", "calibr_camara_02.png", "calibr_camara_03.png", "calibr_camara_04.png", "calibr_camara_05.png",
     "calibr_camara_06.png", "calibr_camara_07.png", "calibr_camara_08.png", "calibr_camara_09.png", "calibr_camara_10.png",
